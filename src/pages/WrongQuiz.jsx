@@ -81,7 +81,7 @@ export default function WrongQuiz() {
           </p>
           <Link
             to="/wrong"
-            className="mt-6 inline-block rounded-xl bg-primary-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600"
+            className="mt-6 inline-flex items-center justify-center rounded-xl bg-primary-600 px-6 py-3.5 sm:py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[48px] sm:min-h-[44px]"
           >
             返回錯題本
           </Link>
@@ -91,15 +91,13 @@ export default function WrongQuiz() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between text-sm text-stone-500 dark:text-stone-400">
-        <span>
-          答題複習 第 {currentIndex + 1} / {questions.length} 題
-        </span>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-stone-500 dark:text-stone-400">
+        <span>答題複習 第 {currentIndex + 1} / {questions.length} 題</span>
         <button
           type="button"
           onClick={() => navigate('/wrong')}
-          className="rounded-lg px-3 py-1 hover:bg-stone-100 dark:hover:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="rounded-lg px-4 py-2.5 min-h-[44px] hover:bg-stone-100 dark:hover:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
           結束複習
         </button>
@@ -118,7 +116,7 @@ export default function WrongQuiz() {
           type="button"
           onClick={handleSubmit}
           disabled={selectedKey == null}
-          className="w-full rounded-xl bg-primary-600 py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[44px]"
+          className="w-full rounded-xl bg-primary-600 py-3.5 sm:py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[48px] sm:min-h-[44px]"
         >
           提交答案
         </button>
@@ -126,7 +124,7 @@ export default function WrongQuiz() {
         <button
           type="button"
           onClick={handleNext}
-          className="w-full rounded-xl bg-primary-600 py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[44px]"
+          className="w-full rounded-xl bg-primary-600 py-3.5 sm:py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[48px] sm:min-h-[44px]"
         >
           {isLast ? '查看結果' : '下一題'}
         </button>

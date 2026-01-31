@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom'
 
 export default function Home() {
+  // #region agent log
+  if (typeof fetch !== 'undefined') fetch('http://127.0.0.1:7242/ingest/f2b3e46d-a0cf-4e75-83a0-2f3b42951dae', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Home.jsx:render', message: 'Home render', data: {}, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'D' }) }).catch(() => {});
+  // #endregion
   return (
     <div className="space-y-8">
       <section className="text-center space-y-4">
@@ -14,10 +17,10 @@ export default function Home() {
         </p>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Link
           to="/exam"
-          className="group flex flex-col rounded-2xl border-2 border-primary-200 bg-primary-50/50 p-6 text-left transition hover:border-primary-400 hover:bg-primary-100/50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:border-primary-800 dark:bg-primary-900/20 dark:hover:border-primary-600 dark:hover:bg-primary-900/40"
+          className="group flex flex-col rounded-2xl border-2 border-primary-200 bg-primary-50/50 p-4 sm:p-6 text-left transition hover:border-primary-400 hover:bg-primary-100/50 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:border-primary-800 dark:bg-primary-900/20 dark:hover:border-primary-600 dark:hover:bg-primary-900/40 min-h-[88px] sm:min-h-0"
         >
           <span className="text-sm font-medium text-primary-600 dark:text-primary-400">
             開始練習
@@ -32,7 +35,7 @@ export default function Home() {
 
         <Link
           to="/challenge"
-          className="group flex flex-col rounded-2xl border-2 border-amber-200 bg-amber-50/50 p-6 text-left transition hover:border-amber-400 hover:bg-amber-100/50 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:border-amber-800 dark:bg-amber-900/20 dark:hover:border-amber-600 dark:hover:bg-amber-900/40"
+          className="group flex flex-col rounded-2xl border-2 border-amber-200 bg-amber-50/50 p-4 sm:p-6 text-left transition hover:border-amber-400 hover:bg-amber-100/50 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:border-amber-800 dark:bg-amber-900/20 dark:hover:border-amber-600 dark:hover:bg-amber-900/40 min-h-[88px] sm:min-h-0"
         >
           <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
             挑戰模式
@@ -47,7 +50,7 @@ export default function Home() {
 
         <Link
           to="/review"
-          className="group flex flex-col rounded-2xl border-2 border-emerald-200 bg-emerald-50/50 p-6 text-left transition hover:border-emerald-400 hover:bg-emerald-100/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:border-emerald-800 dark:bg-emerald-900/20 dark:hover:border-emerald-600 dark:hover:bg-emerald-900/40"
+          className="group flex flex-col rounded-2xl border-2 border-emerald-200 bg-emerald-50/50 p-4 sm:p-6 text-left transition hover:border-emerald-400 hover:bg-emerald-100/50 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:border-emerald-800 dark:bg-emerald-900/20 dark:hover:border-emerald-600 dark:hover:bg-emerald-900/40 min-h-[88px] sm:min-h-0"
         >
           <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
             遺忘曲線複習
@@ -62,7 +65,7 @@ export default function Home() {
 
         <Link
           to="/wrong"
-          className="group flex flex-col rounded-2xl border-2 border-stone-200 bg-stone-50/50 p-6 text-left transition hover:border-stone-300 hover:bg-stone-100/50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:border-stone-700 dark:bg-stone-800/30 dark:hover:border-stone-600 dark:hover:bg-stone-800/50"
+          className="group flex flex-col rounded-2xl border-2 border-stone-200 bg-stone-50/50 p-4 sm:p-6 text-left transition hover:border-stone-300 hover:bg-stone-100/50 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:border-stone-700 dark:bg-stone-800/30 dark:hover:border-stone-600 dark:hover:bg-stone-800/50 min-h-[88px] sm:min-h-0"
         >
           <span className="text-sm font-medium text-stone-500 dark:text-stone-400">
             複習錯題

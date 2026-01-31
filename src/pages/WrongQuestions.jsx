@@ -47,7 +47,7 @@ export default function WrongQuestions() {
         <div className="flex flex-wrap gap-2">
           <Link
             to="/wrong/quiz"
-            className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-primary-500 dark:hover:bg-primary-600"
+            className="rounded-lg bg-primary-600 px-4 py-2.5 min-h-[44px] inline-flex items-center text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-primary-500 dark:hover:bg-primary-600"
           >
             答題複習（{wrongList.length} 題）
           </Link>
@@ -57,13 +57,13 @@ export default function WrongQuestions() {
               clearWrong()
               clearReview()
             }}
-            className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-stone-600 dark:text-stone-300 dark:hover:bg-stone-700"
+            className="rounded-lg border border-stone-300 px-4 py-2.5 min-h-[44px] text-sm font-medium text-stone-700 hover:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-stone-600 dark:text-stone-300 dark:hover:bg-stone-700"
           >
             清空錯題本
           </button>
           <Link
             to="/exam"
-            className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-stone-600 dark:text-stone-300 dark:hover:bg-stone-700"
+            className="rounded-lg border border-stone-300 px-4 py-2.5 min-h-[44px] inline-flex items-center text-sm font-medium text-stone-700 hover:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-stone-600 dark:text-stone-300 dark:hover:bg-stone-700"
           >
             去練習
           </Link>

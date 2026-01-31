@@ -5,7 +5,14 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    /* 手機安全區域（瀏海／虛擬按鈕） */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
   body {
     @apply bg-stone-50 text-stone-900 antialiased dark:bg-stone-900 dark:text-stone-100;
+    min-height: 100vh;
+    min-height: 100dvh; /* 動態視口高度，手機地址欄縮放時更準 */
   }
 }

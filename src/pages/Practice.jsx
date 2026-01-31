@@ -46,7 +46,7 @@ export default function Practice() {
         <div className="flex flex-wrap gap-2">
           <Link
             to={`/practice/${examType}`}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+            className={`rounded-lg px-4 py-2.5 min-h-[44px] text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
               category === 'all'
                 ? 'bg-primary-600 text-white dark:bg-primary-500'
                 : 'bg-stone-200 text-stone-700 hover:bg-stone-300 dark:bg-stone-700 dark:text-stone-300 dark:hover:bg-stone-600'
@@ -58,7 +58,7 @@ export default function Practice() {
             <Link
               key={cat.id}
               to={`/practice/${examType}?category=${cat.id}`}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+              className={`rounded-lg px-4 py-2.5 min-h-[44px] text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
                 category === cat.id
                   ? 'bg-primary-600 text-white dark:bg-primary-500'
                   : 'bg-stone-200 text-stone-700 hover:bg-stone-300 dark:bg-stone-700 dark:text-stone-300 dark:hover:bg-stone-600'

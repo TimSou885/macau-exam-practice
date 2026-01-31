@@ -41,7 +41,7 @@ export default function SpacedReview() {
         {dueCount > 0 && (
           <Link
             to="/review/session"
-            className="mt-6 inline-flex items-center justify-center rounded-xl bg-primary-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[44px]"
+            className="mt-6 inline-flex items-center justify-center rounded-xl bg-primary-600 px-6 py-3.5 sm:py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[48px] sm:min-h-[44px]"
           >
             開始複習（{dueCount} 題）
           </Link>

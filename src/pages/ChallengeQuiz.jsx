@@ -144,17 +144,17 @@ export default function ChallengeQuiz() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between text-sm text-stone-500 dark:text-stone-400">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-stone-500 dark:text-stone-400">
         <span>
           第 {currentIndex + 1} / {questions.length} 題
-          <span className="ml-3 text-amber-600 dark:text-amber-400">
-            已錯 {wrongCount} / {FAIL_THRESHOLD}（達 {FAIL_THRESHOLD} 即失敗）
+          <span className="ml-2 sm:ml-3 text-amber-600 dark:text-amber-400">
+            已錯 {wrongCount} / {FAIL_THRESHOLD}
           </span>
         </span>
         <button
           type="button"
           onClick={handleEndChallenge}
-          className="rounded-lg px-3 py-1 hover:bg-stone-100 dark:hover:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="rounded-lg px-4 py-2.5 min-h-[44px] hover:bg-stone-100 dark:hover:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
           結束挑戰
         </button>
@@ -173,7 +173,7 @@ export default function ChallengeQuiz() {
           type="button"
           onClick={handleSubmit}
           disabled={selectedKey == null}
-          className="w-full rounded-xl bg-primary-600 py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[44px]"
+          className="w-full rounded-xl bg-primary-600 py-3.5 sm:py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[48px] sm:min-h-[44px]"
         >
           提交答案
         </button>
@@ -181,7 +181,7 @@ export default function ChallengeQuiz() {
         <button
           type="button"
           onClick={handleNext}
-          className="w-full rounded-xl bg-primary-600 py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[44px]"
+          className="w-full rounded-xl bg-primary-600 py-3.5 sm:py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[48px] sm:min-h-[44px]"
         >
           {isLast ? '查看結果' : '下一題'}
         </button>

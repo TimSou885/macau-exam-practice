@@ -86,15 +86,13 @@ export default function Quiz() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between text-sm text-stone-500 dark:text-stone-400">
-        <span>
-          第 {currentIndex + 1} / {questions.length} 題
-        </span>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-stone-500 dark:text-stone-400">
+        <span>第 {currentIndex + 1} / {questions.length} 題</span>
         <button
           type="button"
           onClick={() => navigate(`/practice/${examType}?category=${category}`)}
-          className="rounded-lg px-3 py-1 hover:bg-stone-100 dark:hover:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="rounded-lg px-4 py-2.5 min-h-[44px] hover:bg-stone-100 dark:hover:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
           結束練習
         </button>
@@ -113,7 +111,7 @@ export default function Quiz() {
           type="button"
           onClick={handleSubmit}
           disabled={selectedKey == null}
-          className="w-full rounded-xl bg-primary-600 py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[44px]"
+          className="w-full rounded-xl bg-primary-600 py-3.5 sm:py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[48px] sm:min-h-[44px]"
         >
           提交答案
         </button>
@@ -121,7 +119,7 @@ export default function Quiz() {
         <button
           type="button"
           onClick={handleNext}
-          className="w-full rounded-xl bg-primary-600 py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[44px]"
+          className="w-full rounded-xl bg-primary-600 py-3.5 sm:py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[48px] sm:min-h-[44px]"
         >
           {isLast ? '查看結果' : '下一題'}
         </button>
