@@ -38,6 +38,13 @@ npm run build
 npm run preview
 ```
 
+## SEO 與正式網域
+
+- **正式網域（canonical）**：https://macau430.com/
+- **Sitemap**（提交 Google Search Console）：https://macau430.com/sitemap.xml
+- 根目錄靜態檔：`robots.txt`、`sitemap.xml`、`llms.txt`、`about.html`（由 `public/` 建置至 `dist/`）
+- Cloudflare Workers 靜態資源請使用 `wrangler.toml` 的 `[assets]` 設定，確保真實檔案優先於 SPA fallback
+
 ## 部署
 
 - **Cloudflare Workers（推薦）**：`npm run deploy`，題庫在 D1。詳見 [DEPLOY.md](./DEPLOY.md)。

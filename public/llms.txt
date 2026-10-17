@@ -1,0 +1,36 @@
+# Macau Civil Service Exam Practice (macau430.com)
+
+> Free Traditional Chinese practice for Macau SAR government 430 and 260 comprehensive ability assessments (綜合能力評估). Not affiliated with SAFP.
+
+- Site: https://macau430.com/
+- Canonical: https://macau430.com/
+- Language: zh-TW (Traditional Chinese)
+- Audience: Candidates preparing for Macau public service open exams (公職開考)
+- Content: Law, math, charts, logic, reading comprehension — practice quizzes with explanations
+- Official exam info: http://concurso-uni.safp.gov.mo/
+
+## Main pages
+
+- Home: https://macau430.com/
+- About / FAQ: https://macau430.com/about.html
+- Choose exam (430 or 260): https://macau430.com/exam
+- 430 practice hub: https://macau430.com/practice/430
+- 260 practice hub: https://macau430.com/practice/260
+- Challenge mode: https://macau430.com/challenge
+- Spaced review (wrong questions): https://macau430.com/review
+- Wrong-question notebook: https://macau430.com/wrong
+
+## Exam types (summary)
+
+- **430 統考** — Bachelor-degree level comprehensive assessment (學士學位程度綜合能力評估開考); categories: law, math, charts, logic, reading. Reference format in this app: ~58 questions, 100 points, 50 to pass (practice scoring).
+- **260 統考** — Technician-level comprehensive assessment (技術員程度綜合能力評估開考); same subject categories for practice.
+
+## Crawling
+
+- robots.txt: https://macau430.com/robots.txt
+- sitemap: https://macau430.com/sitemap.xml
+- Extended notes: https://macau430.com/llms-full.txt
+
+## Disclaimer
+
+Practice-only study tool. Question banks include community recall and study materials. For official syllabus, dates, and rules, use the Macau SAFP concurso site above.
