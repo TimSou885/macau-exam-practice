@@ -1,0 +1,41 @@
+Macau Exam Practice — macau430.com
+===================================
+
+What this site is
+-----------------
+macau430.com is a browser-based practice application for the Macau Special Administrative Region government civil service open exams known as the 430 and 260 comprehensive ability assessments (綜合能力評估開考). It helps candidates drill multiple-choice questions with immediate feedback and explanations.
+
+Who it is for
+-------------
+- People preparing for 430 (學士學位程度) or 260 (技術員程度) unified assessments
+- Users who want category practice (法律、數學、圖表分析、推理邏輯、閱讀理解), challenge mode, wrong-question review, and spaced repetition
+
+Languages
+---------
+Primary UI and content: Traditional Chinese (zh-TW).
+
+What it is NOT
+--------------
+- Not an official SAFP / 公職局 website
+- Not a registration or examination portal
+- Does not guarantee exam content matches future official papers
+
+Official source
+---------------
+Macau public service open exam information:
+http://concurso-uni.safp.gov.mo/
+
+Key URLs
+--------
+https://macau430.com/
+https://macau430.com/about.html
+https://macau430.com/exam
+https://macau430.com/practice/430
+https://macau430.com/practice/260
+https://macau430.com/challenge
+https://macau430.com/review
+https://macau430.com/wrong
+
+Technical
+---------
+Single-page application (React). Static SEO files at site root: robots.txt, sitemap.xml, llms.txt. User progress stored locally in the browser (localStorage).

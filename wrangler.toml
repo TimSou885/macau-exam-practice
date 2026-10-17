@@ -1,3 +1,6 @@
+# Cloudflare Workers + Static Assets (production: macau430.com)
+# Static files in dist/ (from `npm run build`, including public/ SEO copies) are served
+# before SPA fallback when not_found_handling is single-page-application.
 name = "macau-exam-practice"
 main = "worker/index.ts"
 compatibility_date = "2024-11-01"
