@@ -34,6 +34,13 @@ npm run build
 npm run preview
 ```
 
+## SEO 與正式網域
+
+- **正式網域（canonical）**：https://macau430.com/
+- **Sitemap**（提交 Google Search Console）：https://macau430.com/sitemap.xml
+- 根目錄靜態檔：`robots.txt`、`sitemap.xml`、`llms.txt`、`about.html`（由 `public/` 建置至 `dist/`）
+- Cloudflare Workers 靜態資源請使用 `wrangler.toml` 的 `[assets]` 設定，確保真實檔案優先於 SPA fallback
+
 ## 部署
 
 - **Vercel（推薦）**：匯入 GitHub repo 後一鍵部署，已含 SPA 路由設定（`vercel.json`）。詳見 [DEPLOY.md](./DEPLOY.md)。
