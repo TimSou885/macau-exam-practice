@@ -1,5 +1,8 @@
 import { useParams, Link, useSearchParams } from 'react-router-dom'
-import { EXAM_TYPES, getQuestionsByExamAndCategory } from '../data'
+import { EXAM_TYPES } from '../data'
+import { useQuestionCount } from '../hooks/useQuestions'
+import LoadingBlock from '../components/LoadingBlock'
+import LoadError from '../components/LoadError'
 
 export default function Practice() {
   const { examType } = useParams()
@@ -7,7 +10,7 @@ export default function Practice() {
   const category = searchParams.get('category') || 'all'
 
   const meta = EXAM_TYPES[examType]
-  const questions = getQuestionsByExamAndCategory(examType, category === 'all' ? null : category)
+  const { count, loading, error } = useQuestionCount(examType, category)
 
   if (!meta) {
     return (
@@ -19,6 +22,11 @@ export default function Practice() {
       </div>
     )
   }
+
+  if (loading) return <LoadingBlock />
+  if (error) return <LoadError message={error.message} />
+
+  const questionCount = count ?? 0
 
   return (
     <div className="space-y-8">
@@ -72,9 +80,9 @@ export default function Practice() {
 
       <section className="rounded-xl border border-stone-200 bg-white p-6 dark:border-stone-700 dark:bg-stone-800/50">
         <p className="text-stone-600 dark:text-stone-400">
-          本類別共 <strong className="text-stone-900 dark:text-stone-100">{questions.length}</strong> 題。
+          本類別共 <strong className="text-stone-900 dark:text-stone-100">{questionCount}</strong> 題。
         </p>
-        {questions.length === 0 ? (
+        {questionCount === 0 ? (
           <p className="mt-4 text-stone-500 dark:text-stone-400">
             暫無該類別題目，可選擇「全部」或其他類別練習。
           </p>

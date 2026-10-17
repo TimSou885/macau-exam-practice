@@ -1,42 +1,52 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useReviewSchedule } from '../hooks/useStorage'
-import { questions430, questions260, questions430Past, questions260Official, questions260Past, questionsLawShared, questions430Math, questions430Chart, questions430Logic, questions430Reading, questions260Math, questions260Chart, questions260Logic, questions260Reading } from '../data'
+import { useQuestionsByIds } from '../hooks/useQuestions'
+import { verifyAnswer } from '../api/questions'
+import { shuffle } from '../utils/shuffle'
 import QuestionCard from '../components/QuestionCard'
-
-const allQuestions = [...questions430, ...questions430Past, ...questionsLawShared, ...questions430Math, ...questions430Chart, ...questions430Logic, ...questions430Reading, ...questions260, ...questions260Official, ...questions260Past, ...questions260Math, ...questions260Chart, ...questions260Logic, ...questions260Reading]
-const questionMap = Object.fromEntries(allQuestions.map((q) => [q.id, q]))
-
-function shuffle(arr) {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]]
-  }
-  return a
-}
+import LoadingBlock from '../components/LoadingBlock'
+import LoadError from '../components/LoadError'
 
 export default function ReviewQuiz() {
   const navigate = useNavigate()
   const { dueIds, recordReviewResult } = useReviewSchedule()
 
-  const questions = useMemo(() => {
-    const list = dueIds.map((id) => questionMap[id]).filter(Boolean)
-    return shuffle(list)
-  }, [dueIds])
+  const { questions: loaded, loading, error } = useQuestionsByIds(dueIds)
+  const [revealed, setRevealed] = useState({})
+  const [submitting, setSubmitting] = useState(false)
+  const [verifyError, setVerifyError] = useState(null)
+
+  const questions = useMemo(() => shuffle(loaded), [loaded])
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [selectedKey, setSelectedKey] = useState(null)
   const [showResult, setShowResult] = useState(false)
 
-  const current = questions[currentIndex]
+  const baseCurrent = questions[currentIndex]
+  const current = baseCurrent ? { ...baseCurrent, ...revealed[baseCurrent.id] } : null
   const isLast = currentIndex === questions.length - 1
 
-  const handleSubmit = () => {
-    if (selectedKey == null || !current) return
-    const correct = selectedKey === current.correctKey
-    recordReviewResult(current.id, correct)
-    setShowResult(true)
+  const handleSubmit = async () => {
+    if (selectedKey == null || !current || submitting) return
+    setSubmitting(true)
+    setVerifyError(null)
+    try {
+      const result = await verifyAnswer(current.id, selectedKey)
+      setRevealed((prev) => ({
+        ...prev,
+        [current.id]: {
+          correctKey: result.correctKey,
+          explanation: result.explanation,
+        },
+      }))
+      recordReviewResult(current.id, result.correct)
+      setShowResult(true)
+    } catch (err) {
+      setVerifyError(err.message)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleNext = () => {
@@ -44,7 +54,6 @@ export default function ReviewQuiz() {
       navigate('/review')
       return
     }
-    // 當前題目已從 due 移除，下一題即剩餘列表的第一題
     setCurrentIndex(0)
     setSelectedKey(null)
     setShowResult(false)
@@ -53,6 +62,9 @@ export default function ReviewQuiz() {
   const handleEnd = () => {
     navigate('/review')
   }
+
+  if (loading) return <LoadingBlock />
+  if (error) return <LoadError message={error.message} />
 
   if (questions.length === 0) {
     return (
@@ -82,22 +94,26 @@ export default function ReviewQuiz() {
         </button>
       </div>
 
+      {verifyError && (
+        <p className="text-sm text-red-600 dark:text-red-400">{verifyError}</p>
+      )}
+
       <QuestionCard
         question={current}
         selectedKey={selectedKey}
         onSelect={setSelectedKey}
         showResult={showResult}
-        disabled={showResult}
+        disabled={showResult || submitting}
       />
 
       {!showResult ? (
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={selectedKey == null}
+          disabled={selectedKey == null || submitting}
           className="w-full rounded-xl bg-primary-600 py-3.5 sm:py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[48px] sm:min-h-[44px]"
         >
-          提交答案
+          {submitting ? '驗證中…' : '提交答案'}
         </button>
       ) : (
         <button

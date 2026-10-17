@@ -1,17 +1,12 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
-import { getQuestionsByExamAndCategory } from '../data'
+import { useQuestionsList } from '../hooks/useQuestions'
 import { useWrongAnswers, useStats, useReviewSchedule } from '../hooks/useStorage'
+import { verifyAnswer } from '../api/questions'
+import { shuffle } from '../utils/shuffle'
 import QuestionCard from '../components/QuestionCard'
-
-function shuffle(arr) {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]]
-  }
-  return a
-}
+import LoadingBlock from '../components/LoadingBlock'
+import LoadError from '../components/LoadError'
 
 export default function Quiz() {
   const { examType } = useParams()
@@ -23,13 +18,21 @@ export default function Quiz() {
   const { recordAnswer } = useStats()
   const { addToReview } = useReviewSchedule()
 
-  const questions = useMemo(() => {
-    const list = getQuestionsByExamAndCategory(
-      examType,
-      category === 'all' ? null : category
-    )
-    return shuffle(list)
-  }, [examType, category])
+  const { questions: loaded, loading, error } = useQuestionsList(examType, category)
+  const [sessionQuestions, setSessionQuestions] = useState([])
+  const [revealed, setRevealed] = useState({})
+  const [verifyError, setVerifyError] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (loaded.length) setSessionQuestions(shuffle(loaded))
+    else setSessionQuestions([])
+  }, [loaded])
+
+  const questions = useMemo(
+    () => sessionQuestions.map((q) => ({ ...q, ...revealed[q.id] })),
+    [sessionQuestions, revealed]
+  )
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [selectedKey, setSelectedKey] = useState(null)
@@ -39,26 +42,40 @@ export default function Quiz() {
   const current = questions[currentIndex]
   const isLast = currentIndex === questions.length - 1
 
-  const handleSubmit = () => {
-    if (selectedKey == null || !current) return
-    const correct = selectedKey === current.correctKey
-    if (!correct) {
-      addWrong(current.id)
-      addToReview(current.id)
+  const handleSubmit = async () => {
+    if (selectedKey == null || !current || submitting) return
+    setSubmitting(true)
+    setVerifyError(null)
+    try {
+      const result = await verifyAnswer(current.id, selectedKey)
+      setRevealed((prev) => ({
+        ...prev,
+        [current.id]: {
+          correctKey: result.correctKey,
+          explanation: result.explanation,
+        },
+      }))
+      const correct = result.correct
+      if (!correct) {
+        addWrong(current.id)
+        addToReview(current.id)
+      }
+      recordAnswer(examType, correct)
+      setAnswers((prev) => [...prev, { questionId: current.id, correct, selectedKey }])
+      setShowResult(true)
+    } catch (err) {
+      setVerifyError(err.message)
+    } finally {
+      setSubmitting(false)
     }
-    recordAnswer(examType, correct)
-    setAnswers((prev) => [...prev, { questionId: current.id, correct, selectedKey }])
-    setShowResult(true)
   }
 
   const handleNext = () => {
     if (isLast) {
-      const prevCorrect = answers.filter((a) => a.correct).length
-      const currentCorrect = selectedKey === current?.correctKey ? 1 : 0
       navigate('/result', {
         state: {
           total: questions.length,
-          correct: prevCorrect + currentCorrect,
+          correct: answers.filter((a) => a.correct).length,
           examType,
           category,
         },
@@ -69,6 +86,9 @@ export default function Quiz() {
     setSelectedKey(null)
     setShowResult(false)
   }
+
+  if (loading) return <LoadingBlock />
+  if (error) return <LoadError message={error.message} />
 
   if (questions.length === 0) {
     return (
@@ -98,22 +118,26 @@ export default function Quiz() {
         </button>
       </div>
 
+      {verifyError && (
+        <p className="text-sm text-red-600 dark:text-red-400">{verifyError}</p>
+      )}
+
       <QuestionCard
         question={current}
         selectedKey={selectedKey}
         onSelect={setSelectedKey}
         showResult={showResult}
-        disabled={showResult}
+        disabled={showResult || submitting}
       />
 
       {!showResult ? (
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={selectedKey == null}
+          disabled={selectedKey == null || submitting}
           className="w-full rounded-xl bg-primary-600 py-3.5 sm:py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[48px] sm:min-h-[44px]"
         >
-          提交答案
+          {submitting ? '驗證中…' : '提交答案'}
         </button>
       ) : (
         <button

@@ -1,30 +1,16 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
-import { getQuestionsByExam } from '../data'
+import { useQuestionsList } from '../hooks/useQuestions'
 import { useWrongAnswers, useReviewSchedule } from '../hooks/useStorage'
+import { verifyAnswer } from '../api/questions'
+import { shuffle } from '../utils/shuffle'
 import QuestionCard from '../components/QuestionCard'
+import LoadingBlock from '../components/LoadingBlock'
+import LoadError from '../components/LoadError'
 
 const FAIL_THRESHOLD = 5
 
-function shuffle(arr) {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]]
-  }
-  return a
-}
-
-// #region agent log
-const _logCq = (location, message, data, hypothesisId) => {
-  fetch('http://127.0.0.1:7242/ingest/f2b3e46d-a0cf-4e75-83a0-2f3b42951dae', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location, message, data: { ...data }, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId }) }).catch(() => {});
-};
-// #endregion
-
 export default function ChallengeQuiz() {
-  // #region agent log
-  _logCq('ChallengeQuiz.jsx:entry', 'ChallengeQuiz mount start', {}, 'D');
-  // #endregion
   const { examType } = useParams()
   const [searchParams] = useSearchParams()
   const countParam = Math.max(1, parseInt(searchParams.get('count'), 10) || 50)
@@ -32,16 +18,25 @@ export default function ChallengeQuiz() {
 
   const { addWrong } = useWrongAnswers()
   const { addToReview } = useReviewSchedule()
-  // #region agent log
-  _logCq('ChallengeQuiz.jsx:afterHooks', 'ChallengeQuiz after hooks', { examType, countParam }, 'D');
-  // #endregion
 
-  const questions = useMemo(() => {
-    const list = getQuestionsByExam(examType)
-    if (!list.length) return []
-    const shuffled = shuffle(list)
-    return shuffled.slice(0, Math.min(countParam, list.length))
-  }, [examType, countParam])
+  const { questions: loaded, loading, error } = useQuestionsList(examType, 'all')
+  const [sessionQuestions, setSessionQuestions] = useState([])
+  const [revealed, setRevealed] = useState({})
+  const [verifyError, setVerifyError] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (!loaded.length) {
+      setSessionQuestions([])
+      return
+    }
+    setSessionQuestions(shuffle(loaded).slice(0, Math.min(countParam, loaded.length)))
+  }, [loaded, countParam])
+
+  const questions = useMemo(
+    () => sessionQuestions.map((q) => ({ ...q, ...revealed[q.id] })),
+    [sessionQuestions, revealed]
+  )
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [selectedKey, setSelectedKey] = useState(null)
@@ -52,37 +47,53 @@ export default function ChallengeQuiz() {
   const current = questions[currentIndex]
   const isLast = currentIndex === questions.length - 1
 
-  const handleSubmit = () => {
-    if (selectedKey == null || !current) return
-    const correct = selectedKey === current.correctKey
-    if (!correct) {
-      addWrong(current.id)
-      addToReview(current.id)
-      const nextWrong = wrongCount + 1
-      setWrongCount(nextWrong)
-      setAnswers((prev) => [...prev, { questionId: current.id, correct, selectedKey }])
-      setShowResult(true)
-      if (nextWrong >= FAIL_THRESHOLD) {
-        navigate('/challenge/result', {
-          state: {
-            success: false,
-            total: questions.length,
-            wrongCount: nextWrong,
-            answeredCount: currentIndex + 1,
-            examType,
-          },
-        })
-        return
+  const handleSubmit = async () => {
+    if (selectedKey == null || !current || submitting) return
+    setSubmitting(true)
+    setVerifyError(null)
+    try {
+      const result = await verifyAnswer(current.id, selectedKey)
+      setRevealed((prev) => ({
+        ...prev,
+        [current.id]: {
+          correctKey: result.correctKey,
+          explanation: result.explanation,
+        },
+      }))
+      const correct = result.correct
+      if (!correct) {
+        addWrong(current.id)
+        addToReview(current.id)
+        const nextWrong = wrongCount + 1
+        setWrongCount(nextWrong)
+        setAnswers((prev) => [...prev, { questionId: current.id, correct, selectedKey }])
+        setShowResult(true)
+        if (nextWrong >= FAIL_THRESHOLD) {
+          navigate('/challenge/result', {
+            state: {
+              success: false,
+              total: questions.length,
+              wrongCount: nextWrong,
+              answeredCount: currentIndex + 1,
+              examType,
+            },
+          })
+          return
+        }
+      } else {
+        setAnswers((prev) => [...prev, { questionId: current.id, correct, selectedKey }])
+        setShowResult(true)
       }
-    } else {
-      setAnswers((prev) => [...prev, { questionId: current.id, correct, selectedKey }])
-      setShowResult(true)
+    } catch (err) {
+      setVerifyError(err.message)
+    } finally {
+      setSubmitting(false)
     }
   }
 
   const handleNext = () => {
     if (isLast) {
-      const totalCorrect = answers.filter((a) => a.correct).length + (selectedKey === current?.correctKey ? 1 : 0)
+      const totalCorrect = answers.filter((a) => a.correct).length
       navigate('/challenge/result', {
         state: {
           success: totalCorrect === questions.length,
@@ -127,6 +138,9 @@ export default function ChallengeQuiz() {
     )
   }
 
+  if (loading) return <LoadingBlock />
+  if (error) return <LoadError message={error.message} />
+
   if (questions.length === 0) {
     return (
       <div className="text-center py-12">
@@ -160,22 +174,26 @@ export default function ChallengeQuiz() {
         </button>
       </div>
 
+      {verifyError && (
+        <p className="text-sm text-red-600 dark:text-red-400">{verifyError}</p>
+      )}
+
       <QuestionCard
         question={current}
         selectedKey={selectedKey}
         onSelect={setSelectedKey}
         showResult={showResult}
-        disabled={showResult}
+        disabled={showResult || submitting}
       />
 
       {!showResult ? (
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={selectedKey == null}
+          disabled={selectedKey == null || submitting}
           className="w-full rounded-xl bg-primary-600 py-3.5 sm:py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[48px] sm:min-h-[44px]"
         >
-          提交答案
+          {submitting ? '驗證中…' : '提交答案'}
         </button>
       ) : (
         <button
