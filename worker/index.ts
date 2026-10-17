@@ -23,14 +23,47 @@ type PublicQuestion = {
   explanation?: string | null
 }
 
-function jsonResponse(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'no-store',
-    },
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "script-src 'self' https://static.cloudflareinsights.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com data:",
+  "img-src 'self' data:",
+  "connect-src 'self' https://cloudflareinsights.com",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join('; ')
+
+function applySecurityHeaders(headers: Headers): void {
+  headers.set('Content-Security-Policy', CONTENT_SECURITY_POLICY)
+  headers.set('X-Frame-Options', 'DENY')
+  headers.set('X-Content-Type-Options', 'nosniff')
+  headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  headers.set(
+    'Permissions-Policy',
+    'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()'
+  )
+  headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+}
+
+function withSecurityHeaders(response: Response): Response {
+  const headers = new Headers(response.headers)
+  applySecurityHeaders(headers)
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
   })
+}
+
+function jsonResponse(data: unknown, status = 200): Response {
+  const headers = new Headers({
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'no-store',
+  })
+  applySecurityHeaders(headers)
+  return new Response(JSON.stringify(data), { status, headers })
 }
 
 function parseOptions(raw: string): { key: string; text: string }[] {
@@ -155,6 +188,31 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   return jsonResponse({ error: 'Not found' }, 404)
 }
 
+async function serveStatic(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url)
+
+  if (url.pathname === '/favicon.ico') {
+    const iconUrl = new URL('/favicon.svg', request.url)
+    const iconResponse = await env.ASSETS.fetch(new Request(iconUrl, { method: 'GET' }))
+    if (!iconResponse.ok) {
+      return new Response('Not Found', { status: 404 })
+    }
+    const headers = new Headers(iconResponse.headers)
+    headers.set('Content-Type', 'image/svg+xml')
+    headers.set('Cache-Control', 'public, max-age=86400')
+    return withSecurityHeaders(new Response(iconResponse.body, { status: 200, headers }))
+  }
+
+  let assetResponse = await env.ASSETS.fetch(request)
+
+  if (assetResponse.status === 404 && request.method === 'GET') {
+    const indexUrl = new URL('/index.html', request.url)
+    assetResponse = await env.ASSETS.fetch(new Request(indexUrl, { method: 'GET', headers: request.headers }))
+  }
+
+  return withSecurityHeaders(assetResponse)
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url)
@@ -171,11 +229,11 @@ export default {
       return new Response('Method Not Allowed', { status: 405 })
     }
 
-    const assetResponse = await env.ASSETS.fetch(request)
-    if (assetResponse.status === 404 && request.method === 'GET') {
-      const indexUrl = new URL('/index.html', request.url)
-      return env.ASSETS.fetch(new Request(indexUrl, request))
+    try {
+      return await serveStatic(request, env)
+    } catch (err) {
+      console.error(err)
+      return new Response('Internal error', { status: 500 })
     }
-    return assetResponse
   },
 }

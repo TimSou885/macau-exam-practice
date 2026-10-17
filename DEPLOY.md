@@ -46,6 +46,25 @@ Workers 會同時提供：
 - SPA 路由（未匹配資產時回傳 `index.html`）
 - `/api/*` 題庫 API
 
+### 部署後驗證（curl）
+
+Client 路由應回 **200** 且 body 含 SPA 的 `index.html`（`id="root"`），不可出現 Cloudflare **1101**：
+
+```bash
+BASE=https://macau430.com
+
+for path in / /exam /practice/430 /practice/260 /wrong /challenge; do
+  code=$(curl -sS -o /tmp/body.html -w "%{http_code}" "$BASE$path")
+  echo "$path -> HTTP $code"
+  grep -q 'id="root"' /tmp/body.html || echo "  WARN: missing SPA shell"
+done
+
+curl -sS -o /dev/null -w "favicon.ico -> HTTP %{http_code}\n" "$BASE/favicon.ico"
+curl -sS "$BASE/api/health"
+```
+
+成功時應看到各路由 `HTTP 200`，`favicon.ico` 為 200，`/api/health` 為 `{"ok":true}`。
+
 ### 本地開發
 
 ```bash
