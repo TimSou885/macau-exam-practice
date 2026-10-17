@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useWrongAnswers, useReviewSchedule } from '../hooks/useStorage'
-import { useQuestionsByIds } from '../hooks/useQuestions'
+import { useQuestionsByIdsWithAnswers } from '../hooks/useQuestions'
 import QuestionCard from '../components/QuestionCard'
 import LoadingBlock from '../components/LoadingBlock'
 import LoadError from '../components/LoadError'
@@ -9,7 +9,7 @@ export default function WrongQuestions() {
   const { wrongIds, removeWrong, clearWrong } = useWrongAnswers()
   const { removeFromReview, clearReview } = useReviewSchedule()
 
-  const { questions: wrongList, loading, error } = useQuestionsByIds(wrongIds, { reveal: true })
+  const { questions: wrongList, loading, error } = useQuestionsByIdsWithAnswers(wrongIds)
 
   if (wrongIds.length === 0) {
     return (

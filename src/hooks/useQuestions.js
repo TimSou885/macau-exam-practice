@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react'
-import { fetchQuestionCount, fetchQuestions, fetchQuestionsByIds } from '../api/questions'
+import {
+  fetchQuestionCount,
+  fetchQuestions,
+  fetchQuestionsByIds,
+  fetchQuestionsByIdsWithAnswers,
+} from '../api/questions'
 
 export function useExamCounts() {
   const [counts, setCounts] = useState({ '430': null, '260': null })
@@ -60,7 +65,7 @@ export function useQuestionCount(examType, category = 'all') {
   return { count, loading, error }
 }
 
-export function useQuestionsList(examType, category = 'all', { reveal = false } = {}) {
+export function useQuestionsList(examType, category = 'all') {
   const [questions, setQuestions] = useState([])
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -69,7 +74,7 @@ export function useQuestionsList(examType, category = 'all', { reveal = false } 
     let cancelled = false
     setLoading(true)
     setError(null)
-    fetchQuestions(examType, category, { reveal })
+    fetchQuestions(examType, category)
       .then((list) => {
         if (!cancelled) setQuestions(list)
       })
@@ -82,12 +87,12 @@ export function useQuestionsList(examType, category = 'all', { reveal = false } 
     return () => {
       cancelled = true
     }
-  }, [examType, category, reveal])
+  }, [examType, category])
 
   return { questions, loading, error, setQuestions }
 }
 
-export function useQuestionsByIds(ids, { reveal = false, examType = '430' } = {}) {
+export function useQuestionsByIds(ids, { examType = '430' } = {}) {
   const idsKey = ids.join(',')
   const [questions, setQuestions] = useState([])
   const [error, setError] = useState(null)
@@ -97,7 +102,7 @@ export function useQuestionsByIds(ids, { reveal = false, examType = '430' } = {}
     let cancelled = false
     setLoading(true)
     setError(null)
-    fetchQuestionsByIds(ids, { reveal, examType })
+    fetchQuestionsByIds(ids, { examType })
       .then((list) => {
         if (!cancelled) setQuestions(list)
       })
@@ -110,7 +115,42 @@ export function useQuestionsByIds(ids, { reveal = false, examType = '430' } = {}
     return () => {
       cancelled = true
     }
-  }, [idsKey, reveal, examType])
+  }, [idsKey, examType])
+
+  return { questions, loading, error, setQuestions }
+}
+
+export function useQuestionsByIdsWithAnswers(ids, { examType = '430' } = {}) {
+  const idsKey = ids.join(',')
+  const [questions, setQuestions] = useState([])
+  const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setError(null)
+    if (!ids.length) {
+      setQuestions([])
+      setLoading(false)
+      return () => {
+        cancelled = true
+      }
+    }
+    fetchQuestionsByIdsWithAnswers(ids, { examType })
+      .then((list) => {
+        if (!cancelled) setQuestions(list)
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [idsKey, examType])
 
   return { questions, loading, error, setQuestions }
 }

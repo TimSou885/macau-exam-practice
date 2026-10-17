@@ -68,7 +68,7 @@ npm run dev               # Vite（5173），/api 會 proxy 到 8787
 |------|------|
 | `GET /api/questions/count?examType=430&category=all` | 題數 |
 | `GET /api/questions?examType=430&category=law` | 練習用題目（不含正確答案） |
-| `GET /api/questions/by-ids?ids=a,b&reveal=1` | 依 id 載入（錯題本瀏覽可帶 `reveal=1`） |
+| `GET /api/questions/by-ids?ids=a,b` | 依 id 載入（不含正確答案；`reveal=1` 已忽略） |
 | `POST /api/questions/verify` | `{ questionId, selectedKey }` → 正確與解析 |
 
 ---
