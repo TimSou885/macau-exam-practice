@@ -70,19 +70,14 @@ function parseOptions(raw: string): { key: string; text: string }[] {
   return JSON.parse(raw) as { key: string; text: string }[]
 }
 
-function rowToPublic(row: QuestionRow, examType: string, reveal: boolean): PublicQuestion {
-  const base: PublicQuestion = {
+function rowToPublic(row: QuestionRow, examType: string): PublicQuestion {
+  return {
     id: row.id,
     examType,
     category: row.category,
     question: row.question,
     options: parseOptions(row.options),
   }
-  if (reveal) {
-    base.correctKey = row.correct_key
-    base.explanation = row.explanation
-  }
-  return base
 }
 
 function examTypeClause(examType: string): string {
@@ -120,11 +115,10 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   if (path === '/api/questions' && request.method === 'GET') {
     const examType = url.searchParams.get('examType')
     const category = url.searchParams.get('category')
-    const reveal = url.searchParams.get('reveal') === '1'
     if (examType !== '430' && examType !== '260') {
       return jsonResponse({ error: 'Invalid examType' }, 400)
     }
-    let sql = `SELECT id, category, question, options, correct_key, explanation, exam_types FROM questions WHERE ${examTypeClause(examType)}`
+    let sql = `SELECT id, category, question, options, exam_types FROM questions WHERE ${examTypeClause(examType)}`
     const binds: string[] = []
     if (category && category !== 'all') {
       sql += ' AND category = ?'
@@ -132,13 +126,12 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     }
     sql += ' ORDER BY id'
     const { results } = await env.DB.prepare(sql).bind(...binds).all<QuestionRow>()
-    const questions = (results ?? []).map((row) => rowToPublic(row, examType, reveal))
+    const questions = (results ?? []).map((row) => rowToPublic(row, examType))
     return jsonResponse({ questions })
   }
 
   if (path === '/api/questions/by-ids' && request.method === 'GET') {
     const idsParam = url.searchParams.get('ids') ?? ''
-    const reveal = url.searchParams.get('reveal') === '1'
     const examType = url.searchParams.get('examType') ?? '430'
     const ids = idsParam.split(',').map((id) => id.trim()).filter(Boolean)
     if (ids.length === 0) {
@@ -148,12 +141,12 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       return jsonResponse({ error: 'Too many ids' }, 400)
     }
     const placeholders = ids.map(() => '?').join(', ')
-    const sql = `SELECT id, category, question, options, correct_key, explanation, exam_types FROM questions WHERE id IN (${placeholders})`
+    const sql = `SELECT id, category, question, options, exam_types FROM questions WHERE id IN (${placeholders})`
     const { results } = await env.DB.prepare(sql).bind(...ids).all<QuestionRow>()
     const order = new Map(ids.map((id, i) => [id, i]))
     const questions = (results ?? [])
       .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
-      .map((row) => rowToPublic(row, examType, reveal))
+      .map((row) => rowToPublic(row, examType))
     return jsonResponse({ questions })
   }
 
