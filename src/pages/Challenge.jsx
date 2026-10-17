@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { EXAM_TYPES, getQuestionsByExam } from '../data'
+import { EXAM_TYPES } from '../data'
+import { useExamCounts, useQuestionCount } from '../hooks/useQuestions'
 
 const PRESET_COUNTS = [50, 100]
 const MIN_CUSTOM = 10
@@ -9,11 +10,13 @@ const MAX_CUSTOM = 2000
 export default function Challenge() {
   const navigate = useNavigate()
   const [examType, setExamType] = useState(null)
-  const [quantityMode, setQuantityMode] = useState(null) // '50' | '100' | 'custom'
+  const [quantityMode, setQuantityMode] = useState(null)
   const [customCount, setCustomCount] = useState(50)
 
-  const maxForExam = examType ? getQuestionsByExam(examType).length : 0
-  const effectiveMax = Math.min(MAX_CUSTOM, maxForExam)
+  const { counts: examCounts } = useExamCounts()
+  const maxForExam = examType ? (examCounts[examType] ?? 0) : 0
+  const { count: selectedMax, loading: countLoading } = useQuestionCount(examType ?? '', 'all')
+  const effectiveMax = Math.min(MAX_CUSTOM, selectedMax ?? maxForExam)
 
   const getCount = () => {
     if (quantityMode === 'custom') return Math.min(effectiveMax, Math.max(MIN_CUSTOM, customCount))
@@ -23,7 +26,7 @@ export default function Challenge() {
   }
 
   const count = getCount()
-  const canStart = examType && count !== null && count >= MIN_CUSTOM && count <= maxForExam
+  const canStart = examType && count !== null && count >= MIN_CUSTOM && count <= (selectedMax ?? maxForExam)
 
   const handleStart = () => {
     if (!canStart) return
@@ -57,7 +60,7 @@ export default function Challenge() {
         </h2>
         <div className="grid gap-4 sm:grid-cols-2">
           {Object.values(EXAM_TYPES).map((exam) => {
-            const total = getQuestionsByExam(exam.id).length
+            const total = examCounts[exam.id] ?? '…'
             const active = examType === exam.id
             return (
               <button
@@ -88,14 +91,14 @@ export default function Challenge() {
         </div>
       </section>
 
-      {examType && (
+      {examType && !countLoading && (
         <section className="rounded-xl border border-stone-200 bg-white p-6 dark:border-stone-700 dark:bg-stone-800/50">
           <h2 className="text-sm font-semibold text-stone-700 dark:text-stone-300 mb-3">
             2. 選擇題目數量
           </h2>
           <div className="flex flex-wrap gap-3">
             {PRESET_COUNTS.map((n) => {
-              const valid = n <= maxForExam
+              const valid = n <= (selectedMax ?? maxForExam)
               const active = quantityMode === String(n)
               return (
                 <button
@@ -103,10 +106,10 @@ export default function Challenge() {
                   type="button"
                   disabled={!valid}
                   onClick={() => handleQuantityClick(String(n))}
-                className={`rounded-lg px-4 py-2.5 min-h-[44px] text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-stone-900 ${
-                  active
-                    ? 'bg-primary-600 text-white dark:bg-primary-500'
-                    : valid
+                  className={`rounded-lg px-4 py-2.5 min-h-[44px] text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-stone-900 ${
+                    active
+                      ? 'bg-primary-600 text-white dark:bg-primary-500'
+                      : valid
                         ? 'bg-stone-200 text-stone-700 hover:bg-stone-300 dark:bg-stone-700 dark:text-stone-300 dark:hover:bg-stone-600'
                         : 'bg-stone-100 text-stone-400 dark:bg-stone-800 dark:text-stone-500 cursor-not-allowed'
                   }`}

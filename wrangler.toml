@@ -1,9 +1,19 @@
 # Cloudflare Workers + Static Assets (production: macau430.com)
-# Static files in dist/ (from `npm run build`, including public/ copies) are served
+# Static files in dist/ (from `npm run build`, including public/ SEO copies) are served
 # before SPA fallback when not_found_handling is single-page-application.
 name = "macau-exam-practice"
-compatibility_date = "2024-09-23"
+main = "worker/index.ts"
+compatibility_date = "2024-11-01"
 
 [assets]
 directory = "./dist"
 not_found_handling = "single-page-application"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "macau-exam-practice"
+database_id = "ed391adc-6208-4687-a0df-e18f952f86ae"
+migrations_dir = "migrations"
+
+[observability]
+enabled = true

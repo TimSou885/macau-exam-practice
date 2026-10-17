@@ -1,29 +1,23 @@
 import { useState, useMemo } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useWrongAnswers } from '../hooks/useStorage'
-import { questions430, questions260, questions430Past, questions260Official, questions260Past, questionsLawShared, questions430Math, questions430Chart, questions430Logic, questions430Reading, questions260Math, questions260Chart, questions260Logic, questions260Reading } from '../data'
+import { useQuestionsByIds } from '../hooks/useQuestions'
+import { verifyAnswer } from '../api/questions'
+import { shuffle } from '../utils/shuffle'
 import QuestionCard from '../components/QuestionCard'
-
-const allQuestions = [...questions430, ...questions430Past, ...questionsLawShared, ...questions430Math, ...questions430Chart, ...questions430Logic, ...questions430Reading, ...questions260, ...questions260Official, ...questions260Past, ...questions260Math, ...questions260Chart, ...questions260Logic, ...questions260Reading]
-const questionMap = Object.fromEntries(allQuestions.map((q) => [q.id, q]))
-
-function shuffle(arr) {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]]
-  }
-  return a
-}
+import LoadingBlock from '../components/LoadingBlock'
+import LoadError from '../components/LoadError'
 
 export default function WrongQuiz() {
   const navigate = useNavigate()
   const { wrongIds } = useWrongAnswers()
 
-  const questions = useMemo(() => {
-    const list = wrongIds.map((id) => questionMap[id]).filter(Boolean)
-    return shuffle(list)
-  }, [wrongIds])
+  const { questions: loaded, loading, error } = useQuestionsByIds(wrongIds)
+  const [revealed, setRevealed] = useState({})
+  const [submitting, setSubmitting] = useState(false)
+  const [verifyError, setVerifyError] = useState(null)
+
+  const questions = useMemo(() => shuffle(loaded), [loaded])
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [selectedKey, setSelectedKey] = useState(null)
@@ -31,14 +25,31 @@ export default function WrongQuiz() {
   const [answers, setAnswers] = useState([])
   const [finished, setFinished] = useState(false)
 
-  const current = questions[currentIndex]
+  const baseCurrent = questions[currentIndex]
+  const current = baseCurrent ? { ...baseCurrent, ...revealed[baseCurrent.id] } : null
   const isLast = currentIndex === questions.length - 1
 
-  const handleSubmit = () => {
-    if (selectedKey == null || !current) return
-    const correct = selectedKey === current.correctKey
-    setAnswers((prev) => [...prev, { questionId: current.id, correct, selectedKey }])
-    setShowResult(true)
+  const handleSubmit = async () => {
+    if (selectedKey == null || !current || submitting) return
+    setSubmitting(true)
+    setVerifyError(null)
+    try {
+      const result = await verifyAnswer(current.id, selectedKey)
+      setRevealed((prev) => ({
+        ...prev,
+        [current.id]: {
+          correctKey: result.correctKey,
+          explanation: result.explanation,
+        },
+      }))
+      const correct = result.correct
+      setAnswers((prev) => [...prev, { questionId: current.id, correct, selectedKey }])
+      setShowResult(true)
+    } catch (err) {
+      setVerifyError(err.message)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleNext = () => {
@@ -50,6 +61,9 @@ export default function WrongQuiz() {
     setSelectedKey(null)
     setShowResult(false)
   }
+
+  if (loading) return <LoadingBlock />
+  if (error) return <LoadError message={error.message} />
 
   if (questions.length === 0) {
     return (
@@ -67,9 +81,7 @@ export default function WrongQuiz() {
   }
 
   if (finished) {
-    const correctCount = answers.filter((a) => a.correct).length
-    const lastCorrect = selectedKey === current?.correctKey ? 1 : 0
-    const totalCorrect = correctCount + lastCorrect
+    const totalCorrect = answers.filter((a) => a.correct).length
     return (
       <div className="space-y-8">
         <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100 text-center">
@@ -103,22 +115,26 @@ export default function WrongQuiz() {
         </button>
       </div>
 
+      {verifyError && (
+        <p className="text-sm text-red-600 dark:text-red-400">{verifyError}</p>
+      )}
+
       <QuestionCard
         question={current}
         selectedKey={selectedKey}
         onSelect={setSelectedKey}
         showResult={showResult}
-        disabled={showResult}
+        disabled={showResult || submitting}
       />
 
       {!showResult ? (
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={selectedKey == null}
+          disabled={selectedKey == null || submitting}
           className="w-full rounded-xl bg-primary-600 py-3.5 sm:py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[48px] sm:min-h-[44px]"
         >
-          提交答案
+          {submitting ? '驗證中…' : '提交答案'}
         </button>
       ) : (
         <button

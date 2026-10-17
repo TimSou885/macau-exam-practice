@@ -1,21 +1,15 @@
-import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useWrongAnswers, useReviewSchedule } from '../hooks/useStorage'
-import { questions430, questions260, questions430Past, questions260Official, questions260Past, questionsLawShared, questions430Math, questions430Chart, questions430Logic, questions430Reading, questions260Math, questions260Chart, questions260Logic, questions260Reading } from '../data'
+import { useQuestionsByIds } from '../hooks/useQuestions'
 import QuestionCard from '../components/QuestionCard'
-
-// 法律題庫共用，430 與 260 錯題本共用同一組題目 id
-const allQuestions = [...questions430, ...questions430Past, ...questionsLawShared, ...questions430Math, ...questions430Chart, ...questions430Logic, ...questions430Reading, ...questions260, ...questions260Official, ...questions260Past, ...questions260Math, ...questions260Chart, ...questions260Logic, ...questions260Reading]
-const questionMap = Object.fromEntries(allQuestions.map((q) => [q.id, q]))
+import LoadingBlock from '../components/LoadingBlock'
+import LoadError from '../components/LoadError'
 
 export default function WrongQuestions() {
   const { wrongIds, removeWrong, clearWrong } = useWrongAnswers()
   const { removeFromReview, clearReview } = useReviewSchedule()
 
-  const wrongList = useMemo(
-    () => wrongIds.map((id) => questionMap[id]).filter(Boolean),
-    [wrongIds]
-  )
+  const { questions: wrongList, loading, error } = useQuestionsByIds(wrongIds, { reveal: true })
 
   if (wrongIds.length === 0) {
     return (
@@ -37,6 +31,9 @@ export default function WrongQuestions() {
       </div>
     )
   }
+
+  if (loading) return <LoadingBlock />
+  if (error) return <LoadError message={error.message} />
 
   return (
     <div className="space-y-6">
