@@ -1,6 +1,7 @@
 export interface Env {
   DB: D1Database
-  ASSETS: Fetcher
+  /** Present when Workers Static Assets are deployed (`wrangler.toml` `[assets]`). */
+  ASSETS?: Fetcher
 }
 
 interface QuestionRow {
@@ -64,6 +65,33 @@ function jsonResponse(data: unknown, status = 200): Response {
   })
   applySecurityHeaders(headers)
   return new Response(JSON.stringify(data), { status, headers })
+}
+
+function assetsBindingMissingResponse(request: Request): Response {
+  const url = new URL(request.url)
+  console.error('ASSETS binding is not configured', {
+    host: url.host,
+    pathname: url.pathname,
+    method: request.method,
+  })
+  const headers = new Headers({
+    'Content-Type': 'text/plain; charset=utf-8',
+    'Cache-Control': 'no-store',
+    'Retry-After': '120',
+  })
+  applySecurityHeaders(headers)
+  return new Response('Static assets are temporarily unavailable. Retry later or use the production custom domain.', {
+    status: 503,
+    headers,
+  })
+}
+
+function getAssetsFetcher(env: Env): Fetcher | null {
+  const assets = env.ASSETS
+  if (assets && typeof assets.fetch === 'function') {
+    return assets
+  }
+  return null
 }
 
 function parseOptions(raw: string): { key: string; text: string }[] {
@@ -182,11 +210,16 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
 }
 
 async function serveStatic(request: Request, env: Env): Promise<Response> {
+  const assets = getAssetsFetcher(env)
+  if (!assets) {
+    return assetsBindingMissingResponse(request)
+  }
+
   const url = new URL(request.url)
 
   if (url.pathname === '/favicon.ico') {
     const iconUrl = new URL('/favicon.svg', request.url)
-    const iconResponse = await env.ASSETS.fetch(new Request(iconUrl, { method: 'GET' }))
+    const iconResponse = await assets.fetch(new Request(iconUrl, { method: 'GET' }))
     if (!iconResponse.ok) {
       return new Response('Not Found', { status: 404 })
     }
@@ -196,11 +229,11 @@ async function serveStatic(request: Request, env: Env): Promise<Response> {
     return withSecurityHeaders(new Response(iconResponse.body, { status: 200, headers }))
   }
 
-  let assetResponse = await env.ASSETS.fetch(request)
+  let assetResponse = await assets.fetch(request)
 
   if (assetResponse.status === 404 && request.method === 'GET') {
     const indexUrl = new URL('/index.html', request.url)
-    assetResponse = await env.ASSETS.fetch(new Request(indexUrl, { method: 'GET', headers: request.headers }))
+    assetResponse = await assets.fetch(new Request(indexUrl, { method: 'GET', headers: request.headers }))
   }
 
   return withSecurityHeaders(assetResponse)

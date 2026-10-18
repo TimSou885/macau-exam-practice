@@ -103,8 +103,27 @@ export default function Layout() {
       <main className="flex-1 mx-auto w-full max-w-4xl px-4 py-5 sm:px-6 sm:py-8 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
         <Outlet />
       </main>
-      <footer className="border-t border-stone-200 py-4 text-center text-xs sm:text-sm text-stone-500 dark:border-stone-700 dark:text-stone-400 px-4 pb-[env(safe-area-inset-bottom)]">
-        澳門政府 430 / 260 統考題目練習 · 僅供學習使用，正式資訊請以公職局為準
+      <footer className="border-t border-stone-200 py-4 text-center text-xs sm:text-sm text-stone-500 dark:border-stone-700 dark:text-stone-400 px-4 pb-[env(safe-area-inset-bottom)] space-y-1">
+        <p>澳門政府 430 / 260 統考題目練習 · 僅供學習使用，正式資訊請以公職局為準</p>
+        <p>
+          本站由{' '}
+          <a
+            href="https://thesoustudio.com/"
+            rel="noopener noreferrer"
+            className="text-primary-700 hover:underline dark:text-primary-400"
+          >
+            Sou Studio
+          </a>{' '}
+          製作 · 與{' '}
+          <a
+            href="https://mauroad.com/"
+            rel="noopener noreferrer"
+            className="text-primary-700 hover:underline dark:text-primary-400"
+          >
+            mauroad
+          </a>
+          （澳門路況）互連
+        </p>
       </footer>
     </div>
   )
