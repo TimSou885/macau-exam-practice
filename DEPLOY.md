@@ -46,6 +46,33 @@ Workers 會同時提供：
 - SPA 路由（未匹配資產時回傳 `index.html`）
 - `/api/*` 題庫 API
 
+### Workers Static Assets（`ASSETS` 綁定）
+
+生產環境必須使用 **`npm run deploy`**（內含 `vite build` + `wrangler deploy`），不可只部署 Worker 腳本。若只執行 `wrangler deploy` 而 `dist/` 未建置或 `[assets]` 未生效，`env.ASSETS` 會是 `undefined`，非 API 路徑會在 Observability 出現 `Cannot read properties of undefined (reading 'fetch')`。
+
+Worker 已對缺失的 `ASSETS` 回傳 **503** 並記錄結構化錯誤日誌（含 `host`、`pathname`），避免未捕捉的 TypeError。
+
+部署後請確認綁定存在：
+
+```bash
+npx wrangler deployments list
+# 最新部署應包含 static assets；並以 curl 驗證下方靜態路徑
+```
+
+### robots.txt 與 Cloudflare AI 爬蟲設定
+
+站方規則在 **`public/robots.txt`**（建置後在 `dist/robots.txt`），意圖為：**Allow 公開練習頁**、**Disallow `/api/`**、並對常見 AI 爬蟲明確 **Allow**（利於 AEO）。
+
+若 `https://macau430.com/robots.txt` **開頭**出現 `# BEGIN Cloudflare Managed content` 且對 GPTBot／ClaudeBot 等寫 `Disallow: /`，而檔案**後段**又是站方 `Allow: /`，代表 Cloudflare **Bot Preference Sync** 在合併 robots 時與站方意圖衝突。請在 **macau430.com** 區域調整（需帳號權限，本 repo 無法代改）：
+
+1. [Cloudflare 控制台](https://dash.cloudflare.com/) → 選擇 **macau430.com** 區域。
+2. **Security** → **Settings**（或 **Bot traffic**）→ **Configure AI bot policies**（Bot Preference Sync）。
+3. 將 **Training** 改為 **Allow**（或關閉 **Enable Bot Preference Sync**），使管理端不再對 AI 訓練爬蟲插入 `Disallow: /`。
+4. 另可至 **AI Crawl Control** → **Crawlers**，對需要的爬蟲選 **Allow**（與站方 `Allow` 一致）。
+5. 儲存後重新開啟 `https://macau430.com/robots.txt`，確認前段不再與後段 `Allow` 矛盾；`Sitemap` 仍指向 `https://macau430.com/sitemap.xml`。
+
+參考：[Managed robots.txt](https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/)。
+
 ### 部署後驗證（curl）
 
 Client 路由應回 **200** 且 body 含 SPA 的 `index.html`（`id="root"`），不可出現 Cloudflare **1101**：
@@ -61,6 +88,8 @@ done
 
 curl -sS -o /dev/null -w "favicon.ico -> HTTP %{http_code}\n" "$BASE/favicon.ico"
 curl -sS "$BASE/api/health"
+curl -sS "$BASE/robots.txt" | tail -20
+curl -sS -o /dev/null -w "about.html -> HTTP %{http_code}\n" "$BASE/about.html"
 ```
 
 成功時應看到各路由 `HTTP 200`，`favicon.ico` 為 200，`/api/health` 為 `{"ok":true}`。

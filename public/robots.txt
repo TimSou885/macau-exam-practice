@@ -1,16 +1,18 @@
-# https://macau430.com — 澳門 430 / 260 統考練習（非官方）
+# macau430.com — 澳門 430 / 260 統考練習（非官方）
+# 公開練習內容歡迎搜尋引擎與 AI 答案引擎索引；API 與後台路徑不索引。
+# 若 Cloudflare「Bot Preference Sync」在網誌前段插入 Disallow AI 爬蟲，請依 DEPLOY.md 調整控制台，避免與下列 Allow 衝突。
+
 User-agent: *
 Allow: /
 Disallow: /api/
 
-# Search engines
 User-agent: Googlebot
 Allow: /
 
 User-agent: Bingbot
 Allow: /
 
-# AI / answer-engine crawlers (public practice content)
+# AI / answer-engine crawlers (public practice pages only; /api/ disallowed above)
 User-agent: GPTBot
 Allow: /
 
