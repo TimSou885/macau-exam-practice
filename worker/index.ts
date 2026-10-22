@@ -1,3 +1,5 @@
+import { SITE_ORIGIN, classifyRoute, normalizePath, rewriteShell, type RouteKind } from './seo'
+
 export interface Env {
   DB: D1Database
   /** Present when Workers Static Assets are deployed (`wrangler.toml` `[assets]`). */
@@ -229,19 +231,64 @@ async function serveStatic(request: Request, env: Env): Promise<Response> {
     return withSecurityHeaders(new Response(iconResponse.body, { status: 200, headers }))
   }
 
-  let assetResponse = await assets.fetch(request)
+  // SPA routes (no file extension, not the static about page) get the index.html
+  // shell with per-route canonical / title / robots and a real 404 for unknown paths.
+  const lastSegment = url.pathname.split('/').pop() ?? ''
+  const isAboutPath = /^\/about(\.html|\/)?$/.test(url.pathname)
+  if (!lastSegment.includes('.') && !isAboutPath) {
+    const path = normalizePath(url.pathname)
+    const kind = classifyRoute(path)
+    if (path !== url.pathname && kind !== null) {
+      return redirectResponse(`${url.origin}${path}${url.search}`, 301)
+    }
+    return serveShell(assets, request, path, kind)
+  }
 
-  if (assetResponse.status === 404 && request.method === 'GET') {
-    const indexUrl = new URL('/index.html', request.url)
-    assetResponse = await assets.fetch(new Request(indexUrl, { method: 'GET', headers: request.headers }))
+  const assetResponse = await assets.fetch(request)
+  const contentType = assetResponse.headers.get('Content-Type') ?? ''
+  // Missing files (or the asset layer's own SPA fallback for them) are real 404s.
+  if (assetResponse.status === 404 || (contentType.includes('text/html') && !isAboutPath)) {
+    return serveShell(assets, request, normalizePath(url.pathname), null)
   }
 
   return withSecurityHeaders(assetResponse)
 }
 
+async function serveShell(
+  assets: Fetcher,
+  request: Request,
+  path: string,
+  kind: RouteKind | null,
+): Promise<Response> {
+  // Fetch "/" without conditional headers: the rewritten body differs per route,
+  // so the shared index.html ETag must not be reused.
+  const shell = await assets.fetch(new Request(new URL('/', request.url), { method: 'GET' }))
+  if (!shell.ok) {
+    return withSecurityHeaders(shell)
+  }
+  const rewritten = rewriteShell(shell, path, kind)
+  const headers = new Headers(rewritten.headers)
+  headers.delete('ETag')
+  headers.delete('Content-Length')
+  applySecurityHeaders(headers)
+  return new Response(request.method === 'HEAD' ? null : rewritten.body, {
+    status: kind === null ? 404 : 200,
+    headers,
+  })
+}
+
+function redirectResponse(location: string, status: 301 | 302 = 301): Response {
+  const headers = new Headers({ Location: location, 'Cache-Control': 'public, max-age=3600' })
+  applySecurityHeaders(headers)
+  return new Response(null, { status, headers })
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url)
+    if (url.hostname === 'www.macau430.com') {
+      return redirectResponse(`${SITE_ORIGIN}${url.pathname}${url.search}`, 301)
+    }
     if (url.pathname.startsWith('/api/')) {
       try {
         return await handleApi(request, env)

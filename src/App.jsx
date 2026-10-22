@@ -12,6 +12,7 @@ import ChallengeQuiz from './pages/ChallengeQuiz'
 import ChallengeResult from './pages/ChallengeResult'
 import SpacedReview from './pages/SpacedReview'
 import ReviewQuiz from './pages/ReviewQuiz'
+import NotFound from './pages/NotFound'
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
         <Route path="/challenge" element={<Challenge />} />
         <Route path="/challenge/result" element={<ChallengeResult />} />
         <Route path="/challenge/:examType" element={<ChallengeQuiz />} />
+        <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
   )
