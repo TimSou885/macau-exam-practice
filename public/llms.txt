@@ -12,7 +12,7 @@
 ## Main pages
 
 - Home: https://macau430.com/
-- About / FAQ: https://macau430.com/about.html
+- About / FAQ: https://macau430.com/about
 - Choose exam (430 or 260): https://macau430.com/exam
 - 430 practice hub: https://macau430.com/practice/430
 - 260 practice hub: https://macau430.com/practice/260

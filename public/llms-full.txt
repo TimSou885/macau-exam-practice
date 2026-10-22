@@ -28,7 +28,7 @@ http://concurso-uni.safp.gov.mo/
 Key URLs
 --------
 https://macau430.com/
-https://macau430.com/about.html
+https://macau430.com/about
 https://macau430.com/exam
 https://macau430.com/practice/430
 https://macau430.com/practice/260

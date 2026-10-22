@@ -22,10 +22,6 @@ export default function Layout() {
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
 
-  // #region agent log
-  if (typeof fetch !== 'undefined') fetch('http://127.0.0.1:7242/ingest/f2b3e46d-a0cf-4e75-83a0-2f3b42951dae', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Layout.jsx:render', message: 'Layout render', data: { pathname: location?.pathname }, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'C' }) }).catch(() => {});
-  // #endregion
-
   useEffect(() => {
     setMenuOpen(false)
   }, [location.pathname])

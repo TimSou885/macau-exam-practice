@@ -1,9 +1,6 @@
 import { Link } from 'react-router-dom'
 
 export default function Home() {
-  // #region agent log
-  if (typeof fetch !== 'undefined') fetch('http://127.0.0.1:7242/ingest/f2b3e46d-a0cf-4e75-83a0-2f3b42951dae', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Home.jsx:render', message: 'Home render', data: {}, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'D' }) }).catch(() => {});
-  // #endregion
   return (
     <div className="space-y-8">
       <section className="text-center space-y-4">
