@@ -1,18 +1,16 @@
-import { useState, useEffect } from 'react'
-import { Outlet, Link, useLocation } from 'react-router-dom'
+import { Link, Outlet, useLocation } from 'react-router-dom'
+import BottomTabBar, { isImmersiveRoute } from './BottomTabBar'
 
-function NavLink({ to, children, isActive, onClick, mobile }) {
-  const base = 'rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-stone-900'
-  const activeClass = 'bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-200'
-  const inactiveClass = 'text-stone-600 hover:bg-stone-100 hover:text-stone-900 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100'
-  const sizeClass = mobile ? 'block w-full px-4 py-3 text-base min-h-[44px] flex items-center' : 'px-3 py-2 text-sm'
+function NavLink({ to, children, isActive }) {
+  const base =
+    'rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-stone-900 px-3 py-2 text-sm'
+  const activeClass =
+    'bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-200'
+  const inactiveClass =
+    'text-stone-600 hover:bg-stone-100 hover:text-stone-900 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100'
 
   return (
-    <Link
-      to={to}
-      onClick={onClick}
-      className={`${base} ${isActive ? activeClass : inactiveClass} ${sizeClass}`}
-    >
+    <Link to={to} className={`${base} ${isActive ? activeClass : inactiveClass}`}>
       {children}
     </Link>
   )
@@ -20,11 +18,8 @@ function NavLink({ to, children, isActive, onClick, mobile }) {
 
 export default function Layout() {
   const location = useLocation()
-  const [menuOpen, setMenuOpen] = useState(false)
-
-  useEffect(() => {
-    setMenuOpen(false)
-  }, [location.pathname])
+  const immersive = isImmersiveRoute(location.pathname)
+  const showMobileTabs = !immersive
 
   const isActive = (to) =>
     location.pathname === to || (to !== '/' && location.pathname.startsWith(to))
@@ -37,6 +32,10 @@ export default function Layout() {
     { to: '/wrong', label: '錯題本' },
   ]
 
+  const mainPaddingClass = showMobileTabs
+    ? 'pb-[calc(1.25rem+var(--bottom-tab-height)+env(safe-area-inset-bottom))] md:pb-[calc(1.25rem+env(safe-area-inset-bottom))]'
+    : 'pb-[calc(1.25rem+env(safe-area-inset-bottom))]'
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-stone-200 bg-white/95 backdrop-blur dark:border-stone-700 dark:bg-stone-900/95 sticky top-0 z-30">
@@ -47,7 +46,6 @@ export default function Layout() {
           >
             澳門統考練習
           </Link>
-          {/* 桌面導航 */}
           <nav className="hidden md:flex items-center gap-1" aria-label="主選單">
             {navLinks.map(({ to, label }) => (
               <NavLink key={to} to={to} isActive={isActive(to)}>
@@ -55,72 +53,38 @@ export default function Layout() {
               </NavLink>
             ))}
           </nav>
-          {/* 手機選單按鈕 */}
-          <button
-            type="button"
-            onClick={() => setMenuOpen((o) => !o)}
-            className="md:hidden rounded-lg p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            aria-expanded={menuOpen}
-            aria-label={menuOpen ? '關閉選單' : '開啟選單'}
-          >
-            {menuOpen ? (
-              <span className="text-xl leading-none" aria-hidden>✕</span>
-            ) : (
-              <span className="flex flex-col gap-1.5" aria-hidden>
-                <span className="w-5 h-0.5 bg-current rounded-full block" />
-                <span className="w-5 h-0.5 bg-current rounded-full block" />
-                <span className="w-5 h-0.5 bg-current rounded-full block" />
-              </span>
-            )}
-          </button>
         </div>
-        {/* 手機展開選單 */}
-        {menuOpen && (
-          <nav
-            className="md:hidden border-t border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900 py-2"
-            aria-label="主選單"
-          >
-            <div className="mx-auto max-w-4xl px-4 flex flex-col gap-0.5">
-              {navLinks.map(({ to, label }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  isActive={isActive(to)}
-                  mobile
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {label}
-                </NavLink>
-              ))}
-            </div>
-          </nav>
-        )}
       </header>
-      <main className="flex-1 mx-auto w-full max-w-4xl px-4 py-5 sm:px-6 sm:py-8 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+      <main
+        className={`flex-1 mx-auto w-full max-w-4xl px-4 py-5 sm:px-6 sm:py-8 ${mainPaddingClass}`}
+      >
         <Outlet />
       </main>
-      <footer className="border-t border-stone-200 py-4 text-center text-xs sm:text-sm text-stone-500 dark:border-stone-700 dark:text-stone-400 px-4 pb-[env(safe-area-inset-bottom)] space-y-1">
-        <p>澳門政府 430 / 260 統考題目練習 · 僅供學習使用，正式資訊請以公職局為準</p>
-        <p>
-          本站由{' '}
-          <a
-            href="https://thesoustudio.com/"
-            rel="noopener noreferrer"
-            className="text-primary-700 hover:underline dark:text-primary-400"
-          >
-            Sou Studio
-          </a>{' '}
-          製作 · 與{' '}
-          <a
-            href="https://mauroad.com/"
-            rel="noopener noreferrer"
-            className="text-primary-700 hover:underline dark:text-primary-400"
-          >
-            mauroad
-          </a>
-          （澳門路況）互連
-        </p>
-      </footer>
+      {!immersive && (
+        <footer className="hidden md:block border-t border-stone-200 py-4 text-center text-xs sm:text-sm text-stone-500 dark:border-stone-700 dark:text-stone-400 px-4 space-y-1">
+          <p>澳門政府 430 / 260 統考題目練習 · 僅供學習使用，正式資訊請以公職局為準</p>
+          <p>
+            本站由{' '}
+            <a
+              href="https://thesoustudio.com/"
+              rel="noopener noreferrer"
+              className="text-primary-700 hover:underline dark:text-primary-400"
+            >
+              Sou Studio
+            </a>{' '}
+            製作 · 與{' '}
+            <a
+              href="https://mauroad.com/"
+              rel="noopener noreferrer"
+              className="text-primary-700 hover:underline dark:text-primary-400"
+            >
+              mauroad
+            </a>
+            （澳門路況）互連
+          </p>
+        </footer>
+      )}
+      {showMobileTabs && <BottomTabBar />}
     </div>
   )
 }

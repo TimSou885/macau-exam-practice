@@ -32,7 +32,7 @@ export default function Result() {
           <p className="mt-2 text-stone-600 dark:text-stone-400">
             答對 {correct} / {total} 題
           </p>
-          <p className={`mt-2 font-medium ${pass ? 'text-primary-600 dark:text-primary-400' : 'text-amber-600 dark:text-amber-400'}`}>
+          <p className={`mt-2 font-medium ${pass ? 'text-primary-600 dark:text-primary-400' : 'text-amber-800 dark:text-amber-400'}`}>
             {pass ? '達到合格標準（50 分）' : '未達 50 分，請多練習'}
           </p>
           {meta && (

@@ -51,8 +51,14 @@ export default function WrongQuestions() {
           <button
             type="button"
             onClick={() => {
-              clearWrong()
-              clearReview()
+              if (
+                window.confirm(
+                  '確定要清空錯題本嗎？複習排程也會一併清除，此操作無法復原。'
+                )
+              ) {
+                clearWrong()
+                clearReview()
+              }
             }}
             className="rounded-lg border border-stone-300 px-4 py-2.5 min-h-[44px] text-sm font-medium text-stone-700 hover:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-stone-600 dark:text-stone-300 dark:hover:bg-stone-700"
           >

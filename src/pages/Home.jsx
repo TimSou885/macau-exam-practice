@@ -34,7 +34,7 @@ export default function Home() {
           to="/challenge"
           className="group flex flex-col rounded-2xl border-2 border-amber-200 bg-amber-50/50 p-4 sm:p-6 text-left transition hover:border-amber-400 hover:bg-amber-100/50 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:border-amber-800 dark:bg-amber-900/20 dark:hover:border-amber-600 dark:hover:bg-amber-900/40 min-h-[88px] sm:min-h-0"
         >
-          <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
+          <span className="text-sm font-medium text-amber-800 dark:text-amber-400">
             挑戰模式
           </span>
           <span className="mt-1 text-xl font-semibold text-stone-900 dark:text-stone-100">
@@ -49,7 +49,7 @@ export default function Home() {
           to="/review"
           className="group flex flex-col rounded-2xl border-2 border-emerald-200 bg-emerald-50/50 p-4 sm:p-6 text-left transition hover:border-emerald-400 hover:bg-emerald-100/50 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:border-emerald-800 dark:bg-emerald-900/20 dark:hover:border-emerald-600 dark:hover:bg-emerald-900/40 min-h-[88px] sm:min-h-0"
         >
-          <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+          <span className="text-sm font-medium text-emerald-800 dark:text-emerald-400">
             遺忘曲線複習
           </span>
           <span className="mt-1 text-xl font-semibold text-stone-900 dark:text-stone-100">

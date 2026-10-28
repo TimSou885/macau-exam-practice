@@ -119,14 +119,21 @@ export default function Challenge() {
               )
             })}
             <div className="flex items-center gap-2">
-              <span className="text-sm text-stone-600 dark:text-stone-400">自訂：</span>
+              <label
+                htmlFor="challenge-custom-count"
+                className="text-sm text-stone-600 dark:text-stone-400"
+              >
+                自訂：
+              </label>
               <input
+                id="challenge-custom-count"
                 type="number"
                 min={MIN_CUSTOM}
                 max={effectiveMax}
                 value={customCount}
                 onChange={handleCustomChange}
                 onFocus={() => setQuantityMode('custom')}
+                aria-label="自訂題目數量"
                 className="w-24 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
               />
               <span className="text-xs text-stone-500 dark:text-stone-400">
