@@ -5,6 +5,9 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --bottom-tab-height: 3.5rem;
+  }
   html {
     /* 手機安全區域（瀏海／虛擬按鈕） */
     padding-left: env(safe-area-inset-left);

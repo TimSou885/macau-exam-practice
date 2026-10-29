@@ -161,7 +161,7 @@ export default function ChallengeQuiz() {
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-stone-500 dark:text-stone-400">
         <span>
           第 {currentIndex + 1} / {questions.length} 題
-          <span className="ml-2 sm:ml-3 text-amber-600 dark:text-amber-400">
+          <span className="ml-2 sm:ml-3 text-amber-800 dark:text-amber-400">
             已錯 {wrongCount} / {FAIL_THRESHOLD}
           </span>
         </span>
