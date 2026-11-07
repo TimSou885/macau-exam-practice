@@ -80,7 +80,23 @@ export default function Layout() {
             >
               mauroad
             </a>
-            （澳門路況）互連
+            （澳門路況）、{' '}
+            <a
+              href="https://macaupark.com/"
+              rel="noopener noreferrer"
+              className="text-primary-700 hover:underline dark:text-primary-400"
+            >
+              澳泊易
+            </a>
+            、{' '}
+            <a
+              href="https://jetvons.com/"
+              rel="noopener noreferrer"
+              className="text-primary-700 hover:underline dark:text-primary-400"
+            >
+              即單
+            </a>{' '}
+            互連
           </p>
         </footer>
       )}
