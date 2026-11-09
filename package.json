@@ -15,7 +15,9 @@
     "db:seed:local": "wrangler d1 execute macau-exam-practice --local --file=scripts/seed.sql",
     "db:setup:local": "npm run db:migrate:local && npm run db:seed:local",
     "db:migrate:remote": "wrangler d1 migrations apply macau-exam-practice --remote",
-    "db:seed:remote": "wrangler d1 execute macau-exam-practice --remote --file=scripts/seed.sql"
+    "db:seed:remote": "wrangler d1 execute macau-exam-practice --remote --file=scripts/seed.sql",
+    "check:routes": "node scripts/check-routes.mjs",
+    "check:seo": "node scripts/check-seo.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",
