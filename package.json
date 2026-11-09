@@ -17,7 +17,9 @@
     "db:migrate:remote": "wrangler d1 migrations apply macau-exam-practice --remote",
     "db:seed:remote": "wrangler d1 execute macau-exam-practice --remote --file=scripts/seed.sql",
     "check:routes": "node scripts/check-routes.mjs",
-    "check:seo": "node scripts/check-seo.mjs"
+    "check:seo": "node scripts/check-seo.mjs",
+    "test:seo": "node scripts/gen-shell-fixture.mjs && vitest run worker/seo-rewrite.spec.ts",
+    "smoke:hydrated-head": "node scripts/hydrated-head-smoke.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -25,14 +27,17 @@
     "react-router-dom": "^6.28.0"
   },
   "devDependencies": {
+    "@cloudflare/vitest-plugin": "^1.6.0",
     "@cloudflare/workers-types": "^5.20261006.1",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
+    "playwright": "^1.56.1",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.15",
     "typescript": "^5.7.3",
     "vite": "^6.0.3",
     "vite-plugin-pwa": "^0.21.2",
+    "vitest": "^4.1.0",
     "wrangler": "^4.14.0"
   }
 }

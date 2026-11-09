@@ -121,6 +121,11 @@ class SetText {
   }
 }
 
+/** FAQ JSON-LD in index.html matches homepage FAQ/noscript content only — not other routes. */
+function stripHomepageFaqJsonLd(rw: HTMLRewriter): HTMLRewriter {
+  return rw.on('script[type="application/ld+json"][data-seo="homepage-faq"]', new Remove())
+}
+
 /** Rewrite head tags of the SPA shell for the given route. */
 export function rewriteShell(response: Response, path: string, kind: RouteKind | null): Response {
   let rw = new HTMLRewriter()
@@ -137,18 +142,14 @@ export function rewriteShell(response: Response, path: string, kind: RouteKind |
       .on('meta[property="og:description"]', new SetAttr('content', meta.description))
       .on('meta[name="twitter:title"]', new SetAttr('content', meta.ogTitle))
       .on('meta[name="twitter:description"]', new SetAttr('content', meta.description))
-    // WebSite / FAQ JSON-LD in index.html targets the homepage only; drop it on other indexable routes
-    // so crawlers are not given duplicate homepage entity URLs alongside per-route canonicals.
-    if (path !== '/') {
-      rw = rw.on('script[type="application/ld+json"]', new Remove())
-    }
+    if (path !== '/') rw = stripHomepageFaqJsonLd(rw)
   } else {
     // Personal/data pages and unknown paths: keep out of the index, no canonical.
     rw = rw
       .on('meta[name="robots"]', new SetAttr('content', 'noindex, follow'))
       .on('link[rel="canonical"]', new Remove())
       .on('meta[property="og:url"]', new Remove())
-      .on('script[type="application/ld+json"]', new Remove())
+    if (path !== '/') rw = stripHomepageFaqJsonLd(rw)
     if (kind === null) rw = rw.on('title', new SetText(NOT_FOUND_TITLE))
   }
 

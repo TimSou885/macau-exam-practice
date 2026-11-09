@@ -30,13 +30,21 @@ Category query variants on `/practice/*` keep canonical without query string (du
 - Trailing slash on known routes → normalized 301
 - `/index.html` → `/`, `/about.html` → `/about` (static assets layer; expect redirect not 200 duplicate)
 
+## JSON-LD (SSR shell)
+
+| Script `data-seo` | Routes | Notes |
+|-------------------|--------|-------|
+| `site` | all shells | WebSite + WebApplication (site origin URLs — not page URL) |
+| `homepage-faq` | `/` only | FAQPage; removed on other routes (content not on those pages) |
+
 ## Commands
 
 ```bash
 npm run build
-node scripts/check-routes.mjs
-node scripts/check-seo.mjs
-npm run dev:worker   # then spot-check SSR head tags on :8787
+npm run check:routes
+npm run check:seo
+npm run test:seo          # rewriteShell HTMLRewriter regression (Worker runtime)
+npm run dev:worker        # optional: npm run smoke:hydrated-head (needs Playwright)
 ```
 
 ## Live curl (when Cloudflare challenge allows)
