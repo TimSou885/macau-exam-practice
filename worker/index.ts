@@ -114,6 +114,15 @@ function examTypeClause(examType: string): string {
   return `EXISTS (SELECT 1 FROM json_each(exam_types) je WHERE je.value = ${sqlLiteral(examType)})`
 }
 
+const SESSION_QUESTION_MAX = 100
+
+function clampSessionLimit(raw: string | null): number | null {
+  if (raw == null || raw.trim() === '') return null
+  const n = Number(raw)
+  if (!Number.isInteger(n) || n < 1) return null
+  return Math.min(SESSION_QUESTION_MAX, n)
+}
+
 function sqlLiteral(value: string): string {
   return `'${value.replace(/'/g, "''")}'`
 }
@@ -149,12 +158,21 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       return jsonResponse({ error: 'Invalid examType' }, 400)
     }
     let sql = `SELECT id, category, question, options, exam_types FROM questions WHERE ${examTypeClause(examType)}`
-    const binds: string[] = []
+    const binds: Array<string | number> = []
     if (category && category !== 'all') {
       sql += ' AND category = ?'
       binds.push(category)
     }
-    sql += ' ORDER BY id'
+    const limit = clampSessionLimit(url.searchParams.get('limit'))
+    if (url.searchParams.get('limit') != null && url.searchParams.get('limit') !== '' && limit == null) {
+      return jsonResponse({ error: 'Invalid limit' }, 400)
+    }
+    if (limit != null) {
+      sql += ' ORDER BY RANDOM() LIMIT ?'
+      binds.push(limit)
+    } else {
+      sql += ' ORDER BY id'
+    }
     const { results } = await env.DB.prepare(sql).bind(...binds).all<QuestionRow>()
     const questions = (results ?? []).map((row) => rowToPublic(row, examType))
     return jsonResponse({ questions })
@@ -178,6 +196,32 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
       .map((row) => rowToPublic(row, examType))
     return jsonResponse({ questions })
+  }
+
+  if (path === '/api/questions/reveal' && request.method === 'POST') {
+    let body: { ids?: string[] }
+    try {
+      body = await request.json()
+    } catch {
+      return jsonResponse({ error: 'Invalid JSON' }, 400)
+    }
+    const ids = Array.isArray(body.ids)
+      ? body.ids.map((id) => String(id).trim()).filter(Boolean)
+      : []
+    if (ids.length === 0) return jsonResponse({ answers: [] })
+    if (ids.length > 30) return jsonResponse({ error: 'Too many ids' }, 400)
+    const placeholders = ids.map(() => '?').join(', ')
+    const { results } = await env.DB.prepare(
+      `SELECT id, correct_key, explanation FROM questions WHERE id IN (${placeholders})`
+    )
+      .bind(...ids)
+      .all<{ id: string; correct_key: string; explanation: string | null }>()
+    const answers = (results ?? []).map((row) => ({
+      id: row.id,
+      correctKey: row.correct_key,
+      explanation: row.explanation,
+    }))
+    return jsonResponse({ answers })
   }
 
   if (path === '/api/questions/verify' && request.method === 'POST') {

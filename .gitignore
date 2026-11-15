@@ -26,3 +26,8 @@ dist-ssr
 *.sw?
 
 worker/fixtures/spa-shell.generated.ts
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/

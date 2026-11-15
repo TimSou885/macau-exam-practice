@@ -25,35 +25,60 @@ function getEndOfToday() {
   return d.getTime()
 }
 
+function normalizeWrongEntry(item) {
+  if (typeof item === 'string') return { id: item, category: null, examType: null, addedAt: null }
+  if (item && typeof item.id === 'string') {
+    return {
+      id: item.id,
+      category: item.category ?? null,
+      examType: item.examType ?? null,
+      addedAt: item.addedAt ?? null,
+    }
+  }
+  return null
+}
+
 export function useWrongAnswers() {
-  const [wrongIds, setWrongIds] = useState(() =>
-    loadJson(STORAGE_KEYS.wrongAnswers, [])
+  const [entries, setEntries] = useState(() =>
+    loadJson(STORAGE_KEYS.wrongAnswers, []).map(normalizeWrongEntry).filter(Boolean)
   )
 
   useEffect(() => {
-    saveJson(STORAGE_KEYS.wrongAnswers, wrongIds)
-  }, [wrongIds])
+    saveJson(STORAGE_KEYS.wrongAnswers, entries)
+  }, [entries])
 
-  const addWrong = useCallback((questionId) => {
-    setWrongIds((prev) =>
-      prev.includes(questionId) ? prev : [...prev, questionId]
+  const addWrong = useCallback((questionId, meta = {}) => {
+    setEntries((prev) =>
+      prev.some((item) => item.id === questionId)
+        ? prev
+        : [
+            ...prev,
+            {
+              id: questionId,
+              category: meta.category ?? null,
+              examType: meta.examType ?? null,
+              addedAt: Date.now(),
+            },
+          ]
     )
   }, [])
 
   const removeWrong = useCallback((questionId) => {
-    setWrongIds((prev) => prev.filter((id) => id !== questionId))
+    setEntries((prev) => prev.filter((item) => item.id !== questionId))
   }, [])
 
   const clearWrong = useCallback(() => {
-    setWrongIds([])
+    setEntries([])
   }, [])
 
   const hasWrong = useCallback(
-    (questionId) => wrongIds.includes(questionId),
-    [wrongIds]
+    (questionId) => entries.some((item) => item.id === questionId),
+    [entries]
   )
 
-  return { wrongIds, addWrong, removeWrong, clearWrong, hasWrong }
+  const wrongIds = entries.map((item) => item.id)
+
+  return { entries, wrongIds, addWrong, removeWrong, clearWrong, hasWrong }
 }
 
 export function useStats() {
@@ -102,17 +127,19 @@ export function useReviewSchedule() {
       .map(([id]) => id)
   }, [schedule])
 
-  const addToReview = useCallback((questionId) => {
+  const addToReview = useCallback((questionId, meta = {}) => {
     const now = Date.now()
     const next = new Date(now)
     next.setDate(next.getDate() + REVIEW_INTERVAL_DAYS[0])
     setSchedule((prev) => ({
       ...prev,
       [questionId]: {
-        addedAt: now,
+        addedAt: prev[questionId]?.addedAt ?? now,
         lastReviewedAt: now,
         nextReviewAt: next.getTime(),
         stage: 0,
+        category: meta.category ?? prev[questionId]?.category ?? null,
+        examType: meta.examType ?? prev[questionId]?.examType ?? null,
       },
     }))
   }, [])

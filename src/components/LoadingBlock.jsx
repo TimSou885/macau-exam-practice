@@ -1,16 +1,18 @@
+import { Button } from '@astryxdesign/core/Button'
+import { EmptyState } from '@astryxdesign/core/EmptyState'
+import { Spinner } from '@astryxdesign/core/Spinner'
+
 export default function LoadingBlock({ label = '載入題目中…' }) {
+  return <Spinner size="lg" label={label} />
+}
+
+export function LoadError({ message, onRetry }) {
   return (
-    <div
-      className="flex flex-col items-center justify-center py-12 text-stone-600 dark:text-stone-400"
-      role="status"
-      aria-busy="true"
-      aria-live="polite"
-    >
-      <span
-        className="mb-3 inline-block h-8 w-8 animate-spin rounded-full border-2 border-stone-300 border-t-primary-600 motion-reduce:animate-none dark:border-stone-600 dark:border-t-primary-400"
-        aria-hidden
-      />
-      <p>{label}</p>
-    </div>
+    <EmptyState
+      title="無法載入題目"
+      description={message}
+      headingLevel={2}
+      actions={onRetry ? <Button label="重試" variant="primary" size="md" onClick={onRetry} /> : undefined}
+    />
   )
 }

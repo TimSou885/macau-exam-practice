@@ -1,209 +1,105 @@
-import { useState, useMemo, useEffect } from 'react'
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
+import { useMemo } from 'react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Button } from '@astryxdesign/core/Button'
+import { EmptyState } from '@astryxdesign/core/EmptyState'
+import LoadingBlock, { LoadError } from '../components/LoadingBlock'
+import PageLayout, { PAGE_FORM_WIDTH } from '../components/PageLayout'
+import QuizRunner from '../components/QuizRunner'
 import { useQuestionsList } from '../hooks/useQuestions'
-import { useWrongAnswers, useReviewSchedule } from '../hooks/useStorage'
-import { verifyAnswer } from '../api/questions'
-import { shuffle } from '../utils/shuffle'
-import QuestionCard from '../components/QuestionCard'
-import LoadingBlock from '../components/LoadingBlock'
-import LoadError from '../components/LoadError'
+import { useReviewSchedule, useStats, useWrongAnswers } from '../hooks/useStorage'
+import { clampSessionLimit } from '../utils/questionLimit'
+import { loadSession, saveLastResult } from '../utils/sessionStore'
 
 const FAIL_THRESHOLD = 5
 
 export default function ChallengeQuiz() {
   const { examType } = useParams()
   const [searchParams] = useSearchParams()
-  const countParam = Math.max(1, parseInt(searchParams.get('count'), 10) || 50)
   const navigate = useNavigate()
-
+  const count = clampSessionLimit(searchParams.get('count')) ?? 20
+  const validExam = examType === '430' || examType === '260'
+  const sessionKey = `challenge:${examType}:${count}`
+  const href = `/challenge/${examType}?count=${count}`
+  const saved = useMemo(() => (validExam ? loadSession(sessionKey) : null), [sessionKey, validExam])
+  const { questions: loaded, loading, error, reload } = useQuestionsList(validExam ? examType : '', 'all', {
+    limit: count,
+    enabled: validExam && !saved,
+  })
   const { addWrong } = useWrongAnswers()
   const { addToReview } = useReviewSchedule()
+  const { recordAnswer } = useStats()
+  const questions = saved?.questions ?? loaded
 
-  const { questions: loaded, loading, error } = useQuestionsList(examType, 'all')
-  const [sessionQuestions, setSessionQuestions] = useState([])
-  const [revealed, setRevealed] = useState({})
-  const [verifyError, setVerifyError] = useState(null)
-  const [submitting, setSubmitting] = useState(false)
-
-  useEffect(() => {
-    if (!loaded.length) {
-      setSessionQuestions([])
-      return
-    }
-    setSessionQuestions(shuffle(loaded).slice(0, Math.min(countParam, loaded.length)))
-  }, [loaded, countParam])
-
-  const questions = useMemo(
-    () => sessionQuestions.map((q) => ({ ...q, ...revealed[q.id] })),
-    [sessionQuestions, revealed]
-  )
-
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [selectedKey, setSelectedKey] = useState(null)
-  const [showResult, setShowResult] = useState(false)
-  const [wrongCount, setWrongCount] = useState(0)
-  const [answers, setAnswers] = useState([])
-
-  const current = questions[currentIndex]
-  const isLast = currentIndex === questions.length - 1
-
-  const handleSubmit = async () => {
-    if (selectedKey == null || !current || submitting) return
-    setSubmitting(true)
-    setVerifyError(null)
-    try {
-      const result = await verifyAnswer(current.id, selectedKey)
-      setRevealed((prev) => ({
-        ...prev,
-        [current.id]: {
-          correctKey: result.correctKey,
-          explanation: result.explanation,
-        },
-      }))
-      const correct = result.correct
-      if (!correct) {
-        addWrong(current.id)
-        addToReview(current.id)
-        const nextWrong = wrongCount + 1
-        setWrongCount(nextWrong)
-        setAnswers((prev) => [...prev, { questionId: current.id, correct, selectedKey }])
-        setShowResult(true)
-        if (nextWrong >= FAIL_THRESHOLD) {
-          navigate('/challenge/result', {
-            state: {
-              success: false,
-              total: questions.length,
-              wrongCount: nextWrong,
-              answeredCount: currentIndex + 1,
-              examType,
-            },
-          })
-          return
-        }
-      } else {
-        setAnswers((prev) => [...prev, { questionId: current.id, correct, selectedKey }])
-        setShowResult(true)
-      }
-    } catch (err) {
-      setVerifyError(err.message)
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const handleNext = () => {
-    if (isLast) {
-      const totalCorrect = answers.filter((a) => a.correct).length
-      navigate('/challenge/result', {
-        state: {
-          success: totalCorrect === questions.length,
-          total: questions.length,
-          wrongCount,
-          answeredCount: questions.length,
-          examType,
-        },
-      })
-      return
-    }
-    setCurrentIndex((i) => i + 1)
-    setSelectedKey(null)
-    setShowResult(false)
-  }
-
-  const handleEndChallenge = () => {
-    navigate('/challenge/result', {
-      state: {
-        success: false,
-        total: questions.length,
-        wrongCount,
-        answeredCount: currentIndex + (showResult ? 1 : 0),
-        examType,
-        quitEarly: true,
-      },
-    })
-  }
-
-  if (examType !== '430' && examType !== '260') {
+  if (!validExam) {
     return (
-      <div className="text-center py-12">
-        <p className="text-stone-600 dark:text-stone-400">無效的考試類型。</p>
-        <button
-          type="button"
-          onClick={() => navigate('/challenge')}
-          className="mt-4 text-primary-600 dark:text-primary-400 underline"
-        >
-          返回挑戰選擇
-        </button>
-      </div>
+      <PageLayout title="無效的考試類型" contentWidth={PAGE_FORM_WIDTH}>
+        <EmptyState
+          title="沒有這個考試"
+          description="挑戰只接受 430 和 260。"
+          headingLevel={2}
+          actions={<Button label="返回挑戰選擇" href="/challenge" variant="primary" size="md" />}
+        />
+      </PageLayout>
     )
   }
-
-  if (loading) return <LoadingBlock />
-  if (error) return <LoadError message={error.message} />
-
+  if (!saved && loading) {
+    return (
+      <PageLayout title="挑戰" contentWidth={PAGE_FORM_WIDTH}>
+        <LoadingBlock />
+      </PageLayout>
+    )
+  }
+  if (error) {
+    return (
+      <PageLayout title="挑戰" contentWidth={PAGE_FORM_WIDTH}>
+        <LoadError message={error.message} onRetry={reload} />
+      </PageLayout>
+    )
+  }
   if (questions.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-stone-600 dark:text-stone-400">暫無題目。</p>
-        <button
-          type="button"
-          onClick={() => navigate('/challenge')}
-          className="mt-4 text-primary-600 dark:text-primary-400 underline"
-        >
-          返回挑戰選擇
-        </button>
-      </div>
+      <PageLayout title="暫無題目" contentWidth={PAGE_FORM_WIDTH}>
+        <EmptyState
+          title="這個考試暫時沒有題目"
+          description="回到挑戰選擇，換一個考試再開始。"
+          headingLevel={2}
+          actions={<Button label="返回挑戰選擇" href="/challenge" variant="primary" size="md" />}
+        />
+      </PageLayout>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-stone-500 dark:text-stone-400">
-        <span>
-          第 {currentIndex + 1} / {questions.length} 題
-          <span className="ml-2 sm:ml-3 text-amber-800 dark:text-amber-400">
-            已錯 {wrongCount} / {FAIL_THRESHOLD}
-          </span>
-        </span>
-        <button
-          type="button"
-          onClick={handleEndChallenge}
-          className="rounded-lg px-4 py-2.5 min-h-[44px] hover:bg-stone-100 dark:hover:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
-        >
-          結束挑戰
-        </button>
-      </div>
-
-      {verifyError && (
-        <p className="text-sm text-red-600 dark:text-red-400">{verifyError}</p>
-      )}
-
-      <QuestionCard
-        question={current}
-        selectedKey={selectedKey}
-        onSelect={setSelectedKey}
-        showResult={showResult}
-        disabled={showResult || submitting}
-      />
-
-      {!showResult ? (
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={selectedKey == null || submitting}
-          className="w-full rounded-xl bg-primary-600 py-3.5 sm:py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[48px] sm:min-h-[44px]"
-        >
-          {submitting ? '驗證中…' : '提交答案'}
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={handleNext}
-          className="w-full rounded-xl bg-primary-600 py-3.5 sm:py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[48px] sm:min-h-[44px]"
-        >
-          {isLast ? '查看結果' : '下一題'}
-        </button>
-      )}
-    </div>
+    <PageLayout title="挑戰" description="錯滿 5 題即結束，並先看那一題的解析。" contentWidth={PAGE_FORM_WIDTH}>
+    <QuizRunner
+      sessionKey={sessionKey}
+      href={href}
+      questions={questions}
+      restored={saved}
+      mode="tutor"
+      failThreshold={FAIL_THRESHOLD}
+      onVerified={(question, result) => {
+        recordAnswer(examType, result.correct)
+        if (!result.correct) {
+          addWrong(question.id, { category: question.category, examType })
+          addToReview(question.id, { category: question.category, examType })
+        }
+      }}
+      onFinish={(answers) => {
+        const wrongCount = answers.filter((answer) => !answer.correct).length
+        const state = {
+          success: wrongCount === 0 && answers.length === questions.length,
+          total: questions.length,
+          wrongCount,
+          answeredCount: answers.length,
+          examType,
+          quitEarly: answers.length < questions.length && wrongCount < FAIL_THRESHOLD,
+        }
+        saveLastResult({ ...state, total: answers.length || state.total, kind: 'challenge' })
+        navigate('/challenge/result', { state })
+      }}
+      onQuit={() => navigate('/challenge')}
+    />
+    </PageLayout>
   )
 }

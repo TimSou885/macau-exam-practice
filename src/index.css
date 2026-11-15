@@ -1,21 +1,58 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap');
+@import '@astryxdesign/core/reset.css';
+@import '@astryxdesign/core/astryx.css';
+@import '@astryxdesign/theme-neutral/fonts.css';
+@import '@astryxdesign/theme-neutral/theme.css';
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-  :root {
-    --bottom-tab-height: 3.5rem;
-  }
-  html {
-    /* 手機安全區域（瀏海／虛擬按鈕） */
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-  }
-  body {
-    @apply bg-stone-50 text-stone-900 antialiased dark:bg-stone-900 dark:text-stone-100;
-    min-height: 100vh;
-    min-height: 100dvh; /* 動態視口高度，手機地址欄縮放時更準 */
-  }
+/* Neutral's Figtree face has no Traditional Chinese glyphs. */
+[data-astryx-theme='neutral'] {
+  --font-family-body: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Figtree', system-ui, sans-serif;
+  --font-family-heading: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Figtree', system-ui, sans-serif;
 }
+
+[data-astryx-theme='neutral'] :is(.astryx-heading, .astryx-text, h1, h2, h3, h4, h5, h6, body) {
+  font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Figtree', system-ui, sans-serif;
+}
+
+.app-stage {
+  min-height: 100dvh;
+  background: #d4d4d4;
+}
+
+[data-color-mode='dark'] .app-stage {
+  background: #0a0a0a;
+}
+
+.app-phone {
+  width: min(100%, 26rem);
+  height: 100dvh;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--color-bg, #fff);
+}
+
+.app-phone-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-phone-body > * {
+  flex: 1;
+  min-height: 0;
+}
+
+.app-tabbar {
+  flex: none;
+  border-top: 1px solid #e5e5e5;
+  background: var(--color-bg, #fff);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+[data-color-mode='dark'] .app-tabbar {
+  border-top-color: #262626;
+  background: #171717;
+}
+

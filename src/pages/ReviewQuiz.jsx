@@ -1,129 +1,83 @@
-import { useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useReviewSchedule } from '../hooks/useStorage'
+import { Button } from '@astryxdesign/core/Button'
+import { EmptyState } from '@astryxdesign/core/EmptyState'
+import LoadingBlock, { LoadError } from '../components/LoadingBlock'
+import PageLayout, { PAGE_FORM_WIDTH } from '../components/PageLayout'
+import QuizRunner from '../components/QuizRunner'
 import { useQuestionsByIds } from '../hooks/useQuestions'
-import { verifyAnswer } from '../api/questions'
+import { useReviewSchedule, useStats } from '../hooks/useStorage'
+import { loadSession } from '../utils/sessionStore'
 import { shuffle } from '../utils/shuffle'
-import QuestionCard from '../components/QuestionCard'
-import LoadingBlock from '../components/LoadingBlock'
-import LoadError from '../components/LoadError'
 
 export default function ReviewQuiz() {
   const navigate = useNavigate()
   const { dueIds, recordReviewResult } = useReviewSchedule()
+  const [frozenIds] = useState(dueIds)
+  const sessionKey = `review:${[...frozenIds].sort().join('|')}`
+  const saved = useMemo(() => loadSession(sessionKey), [sessionKey])
+  const { questions: loaded, loading, error, reload } = useQuestionsByIds(saved ? [] : frozenIds)
+  const { recordAnswer } = useStats()
+  const shuffled = useStableShuffle(loaded)
+  const questions = saved?.questions ?? shuffled
 
-  const { questions: loaded, loading, error } = useQuestionsByIds(dueIds)
-  const [revealed, setRevealed] = useState({})
-  const [submitting, setSubmitting] = useState(false)
-  const [verifyError, setVerifyError] = useState(null)
-
-  const questions = useMemo(() => shuffle(loaded), [loaded])
-
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [selectedKey, setSelectedKey] = useState(null)
-  const [showResult, setShowResult] = useState(false)
-
-  const baseCurrent = questions[currentIndex]
-  const current = baseCurrent ? { ...baseCurrent, ...revealed[baseCurrent.id] } : null
-  const isLast = currentIndex === questions.length - 1
-
-  const handleSubmit = async () => {
-    if (selectedKey == null || !current || submitting) return
-    setSubmitting(true)
-    setVerifyError(null)
-    try {
-      const result = await verifyAnswer(current.id, selectedKey)
-      setRevealed((prev) => ({
-        ...prev,
-        [current.id]: {
-          correctKey: result.correctKey,
-          explanation: result.explanation,
-        },
-      }))
-      recordReviewResult(current.id, result.correct)
-      setShowResult(true)
-    } catch (err) {
-      setVerifyError(err.message)
-    } finally {
-      setSubmitting(false)
-    }
+  if (!saved && loading) {
+    return (
+      <PageLayout title="間隔複習" contentWidth={PAGE_FORM_WIDTH}>
+        <LoadingBlock />
+      </PageLayout>
+    )
   }
-
-  const handleNext = () => {
-    if (isLast) {
-      navigate('/review')
-      return
-    }
-    setCurrentIndex(0)
-    setSelectedKey(null)
-    setShowResult(false)
+  if (error) {
+    return (
+      <PageLayout title="間隔複習" contentWidth={PAGE_FORM_WIDTH}>
+        <LoadError message={error.message} onRetry={reload} />
+      </PageLayout>
+    )
   }
-
-  const handleEnd = () => {
-    navigate('/review')
-  }
-
-  if (loading) return <LoadingBlock />
-  if (error) return <LoadError message={error.message} />
-
   if (questions.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-stone-600 dark:text-stone-400">目前沒有待複習題目。</p>
-        <button
-          type="button"
-          onClick={() => navigate('/review')}
-          className="mt-4 text-primary-600 dark:text-primary-400 underline"
-        >
-          返回遺忘曲線複習
-        </button>
-      </div>
+      <PageLayout title="目前沒有待複習題目" contentWidth={PAGE_FORM_WIDTH}>
+        <EmptyState
+          title="今天沒有到期題目"
+          description="答錯的題目會按間隔再出現。可以先回複習頁看下次日期。"
+          headingLevel={2}
+          actions={<Button label="返回遺忘曲線複習" href="/review" variant="primary" size="md" />}
+        />
+      </PageLayout>
     )
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-stone-500 dark:text-stone-400">
-        <span>複習 第 {currentIndex + 1} / {questions.length} 題</span>
-        <button
-          type="button"
-          onClick={handleEnd}
-          className="rounded-lg px-4 py-2.5 min-h-[44px] hover:bg-stone-100 dark:hover:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
-        >
-          結束複習
-        </button>
-      </div>
-
-      {verifyError && (
-        <p className="text-sm text-red-600 dark:text-red-400">{verifyError}</p>
-      )}
-
-      <QuestionCard
-        question={current}
-        selectedKey={selectedKey}
-        onSelect={setSelectedKey}
-        showResult={showResult}
-        disabled={showResult || submitting}
-      />
-
-      {!showResult ? (
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={selectedKey == null || submitting}
-          className="w-full rounded-xl bg-primary-600 py-3.5 sm:py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[48px] sm:min-h-[44px]"
-        >
-          {submitting ? '驗證中…' : '提交答案'}
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={handleNext}
-          className="w-full rounded-xl bg-primary-600 py-3.5 sm:py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[48px] sm:min-h-[44px]"
-        >
-          {isLast ? '完成複習' : '下一題'}
-        </button>
-      )}
-    </div>
+    <PageLayout title="間隔複習" contentWidth={PAGE_FORM_WIDTH}>
+    <QuizRunner
+      sessionKey={sessionKey}
+      href="/review/session"
+      questions={questions}
+      restored={saved}
+      mode="tutor"
+      onVerified={(question, result) => {
+        recordReviewResult(question.id, result.correct)
+        recordAnswer(question.examType || '430', result.correct)
+      }}
+      resultNote={(_question, _revealed, selectedKey) =>
+        selectedKey ? '間隔已按這一題的對錯更新。' : null
+      }
+      onFinish={(answers) => {
+        navigate('/review', {
+          state: {
+            reviewed: answers.length,
+            correct: answers.filter((answer) => answer.correct).length,
+          },
+        })
+      }}
+      onQuit={() => navigate('/review')}
+    />
+    </PageLayout>
   )
+}
+
+function useStableShuffle(list) {
+  const key = list.map((item) => item.id).join('|')
+  return useMemo(() => (list.length ? shuffle(list) : []), [key])
 }

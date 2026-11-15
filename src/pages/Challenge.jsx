@@ -1,160 +1,119 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Button } from '@astryxdesign/core/Button'
+import { Card } from '@astryxdesign/core/Card'
+import { Heading } from '@astryxdesign/core/Heading'
+import { HStack } from '@astryxdesign/core/HStack'
+import { NumberInput } from '@astryxdesign/core/NumberInput'
+import { ToggleButton, ToggleButtonGroup } from '@astryxdesign/core/ToggleButton'
+import { Text } from '@astryxdesign/core/Text'
+import { VStack } from '@astryxdesign/core/VStack'
+import PageLayout, { PAGE_FORM_WIDTH } from '../components/PageLayout'
 import { EXAM_TYPES } from '../data'
-import { useExamCounts, useQuestionCount } from '../hooks/useQuestions'
+import { useExamCounts } from '../hooks/useQuestions'
+import { SESSION_QUESTION_MAX, SESSION_QUESTION_MIN, resolveSessionCount } from '../utils/questionLimit'
 
-const PRESET_COUNTS = [50, 100]
-const MIN_CUSTOM = 10
-const MAX_CUSTOM = 2000
+const PRESETS = [20, 50, 100]
 
 export default function Challenge() {
   const navigate = useNavigate()
   const [examType, setExamType] = useState(null)
-  const [quantityMode, setQuantityMode] = useState(null)
-  const [customCount, setCustomCount] = useState(50)
-
-  const { counts: examCounts } = useExamCounts()
-  const maxForExam = examType ? (examCounts[examType] ?? 0) : 0
-  const { count: selectedMax, loading: countLoading } = useQuestionCount(examType ?? '', 'all')
-  const effectiveMax = Math.min(MAX_CUSTOM, selectedMax ?? maxForExam)
-
-  const getCount = () => {
-    if (quantityMode === 'custom') return Math.min(effectiveMax, Math.max(MIN_CUSTOM, customCount))
-    if (quantityMode === '50') return 50
-    if (quantityMode === '100') return 100
-    return null
-  }
-
-  const count = getCount()
-  const canStart = examType && count !== null && count >= MIN_CUSTOM && count <= (selectedMax ?? maxForExam)
-
-  const handleStart = () => {
-    if (!canStart) return
-    navigate(`/challenge/${examType}?count=${count}`)
-  }
-
-  const handleQuantityClick = (mode) => {
-    setQuantityMode(mode)
-  }
-
-  const handleCustomChange = (e) => {
-    const v = parseInt(e.target.value, 10)
-    setQuantityMode('custom')
-    if (!Number.isNaN(v)) setCustomCount(v)
-  }
+  const [preset, setPreset] = useState(null)
+  const [custom, setCustom] = useState(50)
+  const [useCustom, setUseCustom] = useState(false)
+  const { counts } = useExamCounts()
+  const available = examType ? (counts[examType] ?? 0) : 0
+  const requested = useCustom ? custom : preset
+  const count = requested == null ? null : resolveSessionCount(requested, available || requested)
+  const customInvalid = useCustom && (custom < SESSION_QUESTION_MIN || custom > SESSION_QUESTION_MAX)
+  const canStart = Boolean(examType && count && !customInvalid && available >= SESSION_QUESTION_MIN)
 
   return (
-    <div className="space-y-8">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100 sm:text-3xl">
-          挑戰模式
-        </h1>
-        <p className="mt-2 text-stone-600 dark:text-stone-400">
-          全類別隨機題目，錯滿 5 題即失敗，全對即成功；錯題會加入錯題本。
-        </p>
-      </div>
-
-      <section>
-        <h2 className="text-sm font-semibold text-stone-700 dark:text-stone-300 mb-3">
-          1. 選擇考試類型
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+    <PageLayout
+      title="挑戰模式"
+      description={`全類別隨機出題。錯滿 5 題即失敗，失敗的那一題會先顯示解析。每輪 5 到 ${SESSION_QUESTION_MAX} 題。`}
+      contentWidth={PAGE_FORM_WIDTH}
+    >
+      <VStack gap={3}>
+        <Heading level={2}>1. 選擇考試類型</Heading>
+        <ToggleButtonGroup
+          label="考試類型"
+          size="md"
+          value={examType}
+          onChange={(value) => {
+            if (typeof value !== 'string') return
+            setExamType(value)
+            setPreset(null)
+            setUseCustom(false)
+          }}
+        >
           {Object.values(EXAM_TYPES).map((exam) => {
-            const total = examCounts[exam.id] ?? '…'
-            const active = examType === exam.id
+            const total = counts[exam.id]
             return (
-              <button
+              <ToggleButton
                 key={exam.id}
-                type="button"
-                onClick={() => {
-                  setExamType(exam.id)
-                  setQuantityMode(null)
-                }}
-                className={`rounded-xl border-2 p-5 text-left transition focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-stone-900 ${
-                  active
-                    ? 'border-primary-500 bg-primary-50 dark:border-primary-400 dark:bg-primary-900/30'
-                    : 'border-stone-200 bg-white hover:border-stone-300 dark:border-stone-700 dark:bg-stone-800/50 dark:hover:border-stone-600'
-                }`}
-              >
-                <span className="text-lg font-bold text-primary-600 dark:text-primary-400">
-                  {exam.name}
-                </span>
-                <p className="mt-1 text-sm font-medium text-stone-900 dark:text-stone-100">
-                  {exam.fullName}
-                </p>
-                <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-                  題庫共 {total} 題
-                </p>
-              </button>
+                value={exam.id}
+                label={total == null ? exam.name : `${exam.name}（${total} 題）`}
+              />
             )
           })}
-        </div>
-      </section>
+        </ToggleButtonGroup>
+      </VStack>
 
-      {examType && !countLoading && (
-        <section className="rounded-xl border border-stone-200 bg-white p-6 dark:border-stone-700 dark:bg-stone-800/50">
-          <h2 className="text-sm font-semibold text-stone-700 dark:text-stone-300 mb-3">
-            2. 選擇題目數量
-          </h2>
-          <div className="flex flex-wrap gap-3">
-            {PRESET_COUNTS.map((n) => {
-              const valid = n <= (selectedMax ?? maxForExam)
-              const active = quantityMode === String(n)
-              return (
-                <button
-                  key={n}
-                  type="button"
-                  disabled={!valid}
-                  onClick={() => handleQuantityClick(String(n))}
-                  className={`rounded-lg px-4 py-2.5 min-h-[44px] text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-stone-900 ${
-                    active
-                      ? 'bg-primary-600 text-white dark:bg-primary-500'
-                      : valid
-                        ? 'bg-stone-200 text-stone-700 hover:bg-stone-300 dark:bg-stone-700 dark:text-stone-300 dark:hover:bg-stone-600'
-                        : 'bg-stone-100 text-stone-400 dark:bg-stone-800 dark:text-stone-500 cursor-not-allowed'
-                  }`}
-                >
-                  {n} 題
-                </button>
-              )
-            })}
-            <div className="flex items-center gap-2">
-              <label
-                htmlFor="challenge-custom-count"
-                className="text-sm text-stone-600 dark:text-stone-400"
-              >
-                自訂：
-              </label>
-              <input
-                id="challenge-custom-count"
-                type="number"
-                min={MIN_CUSTOM}
-                max={effectiveMax}
-                value={customCount}
-                onChange={handleCustomChange}
-                onFocus={() => setQuantityMode('custom')}
-                aria-label="自訂題目數量"
-                className="w-24 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
+      {examType && (
+        <Card padding={4}>
+          <VStack gap={3}>
+            <Heading level={2}>2. 選擇題目數量</Heading>
+            <ToggleButtonGroup
+              label="題目數量"
+              size="md"
+              value={!useCustom && preset != null ? String(preset) : null}
+              onChange={(value) => {
+                if (typeof value !== 'string') return
+                setUseCustom(false)
+                setPreset(Number(value))
+              }}
+            >
+              {PRESETS.map((value) => (
+                <ToggleButton
+                  key={value}
+                  value={String(value)}
+                  label={`${value} 題`}
+                  isDisabled={value > available}
+                />
+              ))}
+            </ToggleButtonGroup>
+            <NumberInput
+                label="自訂題數"
+                value={custom}
+                min={SESSION_QUESTION_MIN}
+                max={Math.min(SESSION_QUESTION_MAX, available || SESSION_QUESTION_MAX)}
+                isIntegerOnly
+                onChange={(value) => {
+                  setUseCustom(true)
+                  setCustom(value)
+                }}
+                onFocus={() => setUseCustom(true)}
               />
-              <span className="text-xs text-stone-500 dark:text-stone-400">
-                {MIN_CUSTOM}–{effectiveMax} 題
-              </span>
-            </div>
-          </div>
-        </section>
+            {customInvalid && (
+              <Text>自訂題數要在 {SESSION_QUESTION_MIN} 到 {SESSION_QUESTION_MAX} 之間。</Text>
+            )}
+            {available < SESSION_QUESTION_MIN && <Text>這個考試的題庫不足 {SESSION_QUESTION_MIN} 題。</Text>}
+            {canStart ? (
+              <HStack>
+                <Button
+                  label={`開始挑戰（${count} 題）`}
+                  variant="primary"
+                  size="md"
+                  onClick={() => navigate(`/challenge/${examType}?count=${count}`)}
+                />
+              </HStack>
+            ) : (
+              <Text type="supporting">選好考試和題數後就可以開始。</Text>
+            )}
+          </VStack>
+        </Card>
       )}
-
-      {canStart && (
-        <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={handleStart}
-            className="rounded-xl bg-primary-600 px-6 sm:px-8 py-3.5 sm:py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[48px] sm:min-h-[44px]"
-          >
-            開始挑戰（{count} 題）
-          </button>
-        </div>
-      )}
-    </div>
+    </PageLayout>
   )
 }

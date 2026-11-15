@@ -1,90 +1,104 @@
-import { Link, Outlet, useLocation } from 'react-router-dom'
-import BottomTabBar, { isImmersiveRoute } from './BottomTabBar'
+import { useNavigate, Outlet, useLocation } from 'react-router-dom'
+import { AppShell } from '@astryxdesign/core/AppShell'
+import { Button } from '@astryxdesign/core/Button'
+import { Tab, TabList } from '@astryxdesign/core/TabList'
+import { Text } from '@astryxdesign/core/Text'
+import { TopNav, TopNavHeading } from '@astryxdesign/core/TopNav'
+import { VStack } from '@astryxdesign/core/VStack'
+import NativeLink from './NativeLink'
+import { useColorModeActions } from '../theme/AppTheme'
 
-function NavLink({ to, children, isActive }) {
-  const base =
-    'rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-stone-900 px-3 py-2 text-sm'
-  const activeClass =
-    'bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-200'
-  const inactiveClass =
-    'text-stone-600 hover:bg-stone-100 hover:text-stone-900 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100'
+const TABS = [
+  { to: '/', label: '首頁', match: (path) => path === '/' },
+  {
+    to: '/exam',
+    label: '練習',
+    match: (path) =>
+      path === '/exam' ||
+      path.startsWith('/practice') ||
+      path.startsWith('/quiz') ||
+      path === '/result',
+  },
+  { to: '/challenge', label: '挑戰', match: (path) => path.startsWith('/challenge') },
+  { to: '/review', label: '複習', match: (path) => path.startsWith('/review') },
+  { to: '/wrong', label: '錯題本', match: (path) => path.startsWith('/wrong') },
+]
 
-  return (
-    <Link to={to} className={`${base} ${isActive ? activeClass : inactiveClass}`}>
-      {children}
-    </Link>
-  )
+const MODE_LABEL = { light: '淺色', dark: '深色', system: '跟隨系統' }
+
+function isImmersive(pathname) {
+  if (pathname.startsWith('/quiz/')) return true
+  if (pathname === '/wrong/quiz') return true
+  if (pathname === '/review/session') return true
+  const segments = pathname.split('/').filter(Boolean)
+  return segments[0] === 'challenge' && segments.length === 2 && segments[1] !== 'result'
 }
 
 export default function Layout() {
-  const location = useLocation()
-  const immersive = isImmersiveRoute(location.pathname)
-  const showMobileTabs = !immersive
-
-  const isActive = (to) =>
-    location.pathname === to || (to !== '/' && location.pathname.startsWith(to))
-
-  const navLinks = [
-    { to: '/', label: '首頁' },
-    { to: '/exam', label: '選擇考試' },
-    { to: '/challenge', label: '挑戰模式' },
-    { to: '/review', label: '間隔複習' },
-    { to: '/wrong', label: '錯題本' },
-  ]
-
-  const mainPaddingClass = showMobileTabs
-    ? 'pb-[calc(1.25rem+var(--bottom-tab-height)+env(safe-area-inset-bottom))] md:pb-[calc(1.25rem+env(safe-area-inset-bottom))]'
-    : 'pb-[calc(1.25rem+env(safe-area-inset-bottom))]'
+  const { pathname } = useLocation()
+  const navigate = useNavigate()
+  const { mode, cycle } = useColorModeActions()
+  const immersive = isImmersive(pathname)
+  const selected = TABS.find((tab) => tab.match(pathname))?.to ?? '/'
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b border-stone-200 bg-white/95 backdrop-blur dark:border-stone-700 dark:bg-stone-900/95 sticky top-0 z-30">
-        <div className="mx-auto flex min-h-14 max-w-4xl items-center justify-between gap-3 px-4 sm:px-6">
-          <Link
-            to="/"
-            className="text-base font-bold text-primary-700 dark:text-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded shrink-0 sm:text-lg"
+    <div className="app-stage">
+      <div className="app-phone">
+        <div className="app-phone-body">
+          <AppShell
+            height="fill"
+            variant="surface"
+            contentPadding={0}
+            mobileNav={false}
+            topNav={
+              <TopNav
+                label="應用標題"
+                heading={<TopNavHeading heading="澳門統考練習" headingHref="/" />}
+                endContent={
+                  <Button
+                    label={`外觀：${MODE_LABEL[mode]}`}
+                    variant="secondary"
+                    size="sm"
+                    onClick={cycle}
+                  />
+                }
+              />
+            }
           >
-            澳門統考練習
-          </Link>
-          <nav className="hidden md:flex items-center gap-1" aria-label="主選單">
-            {navLinks.map(({ to, label }) => (
-              <NavLink key={to} to={to} isActive={isActive(to)}>
-                {label}
-              </NavLink>
-            ))}
-          </nav>
+            <Outlet />
+            {immersive ? null : (
+              <VStack gap={1} padding={4}>
+                <Text type="supporting">
+                  非官方練習站。正式開考資訊請以公職局為準。進度只存在這台裝置的瀏覽器。
+                </Text>
+                <Text type="supporting">
+                  <NativeLink href="/about">關於本站</NativeLink>
+                  {' · '}
+                  <NativeLink href="http://concurso-uni.safp.gov.mo/" isExternal>
+                    公職開考
+                  </NativeLink>
+                </Text>
+              </VStack>
+            )}
+          </AppShell>
         </div>
-      </header>
-      <main
-        className={`flex-1 mx-auto w-full max-w-4xl px-4 py-5 sm:px-6 sm:py-8 ${mainPaddingClass}`}
-      >
-        <Outlet />
-      </main>
-      {!immersive && (
-        <footer className="hidden md:block border-t border-stone-200 py-4 text-center text-xs sm:text-sm text-stone-500 dark:border-stone-700 dark:text-stone-400 px-4 space-y-1">
-          <p>澳門政府 430 / 260 統考題目練習 · 僅供學習使用，正式資訊請以公職局為準</p>
-          <p>
-            本站由{' '}
-            <a
-              href="https://thesoustudio.com/"
-              rel="noopener noreferrer"
-              className="text-primary-700 hover:underline dark:text-primary-400"
+        {immersive ? null : (
+          <div className="app-tabbar">
+            <TabList
+              aria-label="主要選單"
+              layout="fill"
+              value={selected}
+              onChange={(value) => {
+                if (typeof value === 'string') navigate(value)
+              }}
             >
-              Sou Studio
-            </a>{' '}
-            製作 · 與{' '}
-            <a
-              href="https://mauroad.com/"
-              rel="noopener noreferrer"
-              className="text-primary-700 hover:underline dark:text-primary-400"
-            >
-              mauroad
-            </a>
-            （澳門路況）互連
-          </p>
-        </footer>
-      )}
-      {showMobileTabs && <BottomTabBar />}
+              {TABS.map((tab) => (
+                <Tab key={tab.to} value={tab.to} label={tab.label} href={tab.to} />
+              ))}
+            </TabList>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

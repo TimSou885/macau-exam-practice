@@ -14,10 +14,23 @@ export async function fetchQuestionCount(examType, category = 'all') {
   return data.count ?? 0
 }
 
-export async function fetchQuestions(examType, category = 'all') {
+export async function fetchQuestions(examType, category = 'all', { limit } = {}) {
   const params = new URLSearchParams({ examType, category })
+  if (limit != null) params.set('limit', String(limit))
   const data = await parseJson(await fetch(`${API_BASE}/api/questions?${params}`))
   return data.questions ?? []
+}
+
+export async function revealAnswers(ids) {
+  if (!ids.length) return []
+  const data = await parseJson(
+    await fetch(`${API_BASE}/api/questions/reveal`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    })
+  )
+  return data.answers ?? []
 }
 
 export async function fetchQuestionsByIds(ids, { examType = '430' } = {}) {
@@ -30,20 +43,16 @@ export async function fetchQuestionsByIds(ids, { examType = '430' } = {}) {
   return data.questions ?? []
 }
 
-/** Load questions and fetch per-question answers via POST /api/questions/verify (for wrong-book review). */
+/** Load a page of wrong-book questions together with answers (one reveal request). */
 export async function fetchQuestionsByIdsWithAnswers(ids, { examType = '430' } = {}) {
   const questions = await fetchQuestionsByIds(ids, { examType })
   if (!questions.length) return []
-  const verified = await Promise.all(
-    questions.map((q) => {
-      const probeKey = q.options[0]?.key ?? 'A'
-      return verifyAnswer(q.id, probeKey)
-    })
-  )
-  return questions.map((q, i) => ({
+  const revealed = await revealAnswers(questions.map((q) => q.id))
+  const byId = new Map(revealed.map((row) => [row.id, row]))
+  return questions.map((q) => ({
     ...q,
-    correctKey: verified[i].correctKey,
-    explanation: verified[i].explanation,
+    correctKey: byId.get(q.id)?.correctKey,
+    explanation: byId.get(q.id)?.explanation,
   }))
 }
 
