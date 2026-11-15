@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@astryxdesign/core/Button'
+import { EmptyState } from '@astryxdesign/core/EmptyState'
 import LoadingBlock, { LoadError } from '../components/LoadingBlock'
 import PageLayout, { PAGE_FORM_WIDTH } from '../components/PageLayout'
 import QuizRunner from '../components/QuizRunner'
@@ -24,7 +25,12 @@ export default function WrongQuiz() {
   if (frozenIds.length === 0 && !saved) {
     return (
       <PageLayout title="目前沒有錯題可複習" contentWidth={PAGE_FORM_WIDTH}>
-        <Button label="返回錯題本" href="/wrong" variant="primary" />
+        <EmptyState
+          title="錯題本是空的"
+          description="練習裡答錯的題目會出現在這裡。"
+          headingLevel={2}
+          actions={<Button label="返回錯題本" href="/wrong" variant="primary" size="md" />}
+        />
       </PageLayout>
     )
   }
@@ -45,7 +51,12 @@ export default function WrongQuiz() {
   if (questions.length === 0) {
     return (
       <PageLayout title="目前沒有錯題可複習" contentWidth={PAGE_FORM_WIDTH}>
-        <Button label="返回錯題本" href="/wrong" variant="primary" />
+        <EmptyState
+          title="錯題本是空的"
+          description="練習裡答錯的題目會出現在這裡。"
+          headingLevel={2}
+          actions={<Button label="返回錯題本" href="/wrong" variant="primary" size="md" />}
+        />
       </PageLayout>
     )
   }

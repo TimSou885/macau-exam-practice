@@ -42,8 +42,8 @@ export default function Layout() {
           endContent={
             <Button
               label={`外觀：${MODE_LABEL[mode]}`}
-              variant="ghost"
-              size="sm"
+              variant="secondary"
+              size="md"
               onClick={cycle}
             />
           }

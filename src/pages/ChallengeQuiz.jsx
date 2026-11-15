@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Button } from '@astryxdesign/core/Button'
+import { EmptyState } from '@astryxdesign/core/EmptyState'
 import LoadingBlock, { LoadError } from '../components/LoadingBlock'
 import PageLayout, { PAGE_FORM_WIDTH } from '../components/PageLayout'
 import QuizRunner from '../components/QuizRunner'
@@ -32,7 +33,12 @@ export default function ChallengeQuiz() {
   if (!validExam) {
     return (
       <PageLayout title="無效的考試類型" contentWidth={PAGE_FORM_WIDTH}>
-        <Button label="返回挑戰選擇" href="/challenge" variant="primary" />
+        <EmptyState
+          title="沒有這個考試"
+          description="挑戰只接受 430 和 260。"
+          headingLevel={2}
+          actions={<Button label="返回挑戰選擇" href="/challenge" variant="primary" size="md" />}
+        />
       </PageLayout>
     )
   }
@@ -53,7 +59,12 @@ export default function ChallengeQuiz() {
   if (questions.length === 0) {
     return (
       <PageLayout title="暫無題目" contentWidth={PAGE_FORM_WIDTH}>
-        <Button label="返回挑戰選擇" href="/challenge" variant="primary" />
+        <EmptyState
+          title="這個考試暫時沒有題目"
+          description="回到挑戰選擇，換一個考試再開始。"
+          headingLevel={2}
+          actions={<Button label="返回挑戰選擇" href="/challenge" variant="primary" size="md" />}
+        />
       </PageLayout>
     )
   }

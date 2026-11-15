@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
+import { EmptyState } from '@astryxdesign/core/EmptyState'
 import { Badge } from '@astryxdesign/core/Badge'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
 import { Card } from '@astryxdesign/core/Card'
 import { Heading } from '@astryxdesign/core/Heading'
+import { HStack } from '@astryxdesign/core/HStack'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
 import PageLayout from '../components/PageLayout'
@@ -38,7 +40,14 @@ export default function SpacedReview() {
       <Card padding={4}>
         <VStack gap={3}>
           <Heading level={2}>今日待複習</Heading>
-          {totalScheduled === 0 && <Text>尚無排程。答錯的題目會自動排進來。</Text>}
+          {totalScheduled === 0 && (
+            <EmptyState
+              isCompact
+              title="尚無排程"
+              description="答錯的題目會自動排進來。"
+              headingLevel={3}
+            />
+          )}
           {totalScheduled > 0 && dueCount === 0 && (
             <Text>
               目前沒有到期題目，共 {totalScheduled} 題在排程中。
@@ -52,7 +61,9 @@ export default function SpacedReview() {
             </Text>
           )}
           {dueCount > 0 && (
-            <Button label={`開始複習（${dueCount} 題）`} variant="primary" href="/review/session" />
+            <HStack>
+              <Button label={`開始複習（${dueCount} 題）`} variant="primary" size="md" href="/review/session" />
+            </HStack>
           )}
         </VStack>
       </Card>
@@ -75,7 +86,9 @@ export default function SpacedReview() {
         </VStack>
       )}
       {totalScheduled > 0 && (
-        <Button label="清空複習排程" variant="secondary" onClick={() => setConfirmClear(true)} />
+        <HStack>
+          <Button label="清空複習排程" variant="secondary" size="md" onClick={() => setConfirmClear(true)} />
+        </HStack>
       )}
       <AlertDialog
         isOpen={confirmClear}
@@ -89,9 +102,9 @@ export default function SpacedReview() {
           setConfirmClear(false)
         }}
       />
-      <Text type="supporting">
-        <Button label="前往錯題本" href="/wrong" variant="ghost" />
-      </Text>
+      <HStack>
+        <Button label="前往錯題本" href="/wrong" variant="secondary" size="md" />
+      </HStack>
     </PageLayout>
   )
 }

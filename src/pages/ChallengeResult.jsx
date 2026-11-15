@@ -45,9 +45,9 @@ export default function ChallengeResult() {
         </VStack>
       </Card>
       <HStack gap={2} wrap="wrap">
-        <Button label="再挑戰" variant="primary" href="/challenge" />
-        <Button label="錯題本" variant="secondary" href="/wrong" />
-        <Button label="返回首頁" variant="secondary" href="/" />
+        <Button label="再挑戰" variant="primary" size="md" href="/challenge" />
+        <Button label="錯題本" variant="secondary" size="md" href="/wrong" />
+        <Button label="返回首頁" variant="secondary" size="md" href="/" />
       </HStack>
     </PageLayout>
   )

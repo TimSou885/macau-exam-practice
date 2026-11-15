@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { Banner } from '@astryxdesign/core/Banner'
+import { EmptyState } from '@astryxdesign/core/EmptyState'
 import { Button } from '@astryxdesign/core/Button'
 import { Card } from '@astryxdesign/core/Card'
 import { Heading } from '@astryxdesign/core/Heading'
 import { HStack } from '@astryxdesign/core/HStack'
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
+import { ToggleButton, ToggleButtonGroup } from '@astryxdesign/core/ToggleButton'
 import { Switch } from '@astryxdesign/core/Switch'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
@@ -32,7 +34,12 @@ export default function Practice() {
   if (!meta) {
     return (
       <PageLayout title="找不到該考試類型" contentWidth={PAGE_FORM_WIDTH}>
-        <Button label="返回選擇考試" href="/exam" variant="primary" />
+        <EmptyState
+          title="沒有這個考試"
+          description="請回到考試列表再選一次。"
+          headingLevel={2}
+          actions={<Button label="返回選擇考試" href="/exam" variant="primary" size="md" />}
+        />
       </PageLayout>
     )
   }
@@ -68,53 +75,65 @@ export default function Practice() {
     >
       <VStack gap={2}>
         <Heading level={2}>選擇題目類別</Heading>
-        <HStack gap={2} wrap="wrap">
+        <ToggleButtonGroup
+          label="題目類別"
+          size="md"
+          value={category}
+          onChange={(value) => {
+            if (typeof value !== 'string') return
+            const next = new URLSearchParams(searchParams)
+            if (value === 'all') next.delete('category')
+            else next.set('category', value)
+            setSearchParams(next)
+          }}
+        >
           {categoryIds.map((id) => {
             const name = id === 'all' ? '全部' : meta.categories.find((item) => item.id === id)?.name
             const total = counts?.[id]
-            const selected = category === id
             return (
-              <Button
+              <ToggleButton
                 key={id}
+                value={id}
                 label={total == null ? name : `${name} ${total}`}
-                variant={selected ? 'primary' : 'secondary'}
-                onClick={() => {
-                  const next = new URLSearchParams(searchParams)
-                  if (id === 'all') next.delete('category')
-                  else next.set('category', id)
-                  setSearchParams(next)
-                }}
               />
             )
           })}
-        </HStack>
+        </ToggleButtonGroup>
       </VStack>
 
       <Card padding={4}>
         <VStack gap={4}>
           <Text>
-            這一輪從本類別抽 <strong>{canStart ? count : 0}</strong> 題（題庫 {available} 題，每輪最多 {SESSION_QUESTION_MAX} 題）。
+            {`這一輪從本類別抽 ${canStart ? count : 0} 題（題庫 ${available} 題，每輪最多 ${SESSION_QUESTION_MAX} 題）。`}
           </Text>
-          <HStack gap={2} wrap="wrap">
+          <ToggleButtonGroup
+            label="這一輪題數"
+            size="md"
+            value={custom ? 'all' : String(preset)}
+            onChange={(value) => {
+              if (value === 'all') {
+                setCustom(true)
+                return
+              }
+              if (typeof value !== 'string') return
+              setCustom(false)
+              setPreset(Number(value))
+            }}
+          >
             {PRESETS.map((value) => (
-              <Button
+              <ToggleButton
                 key={value}
+                value={String(value)}
                 label={`${value} 題`}
-                variant={!custom && preset === value ? 'primary' : 'secondary'}
                 isDisabled={value > available}
-                onClick={() => {
-                  setCustom(false)
-                  setPreset(value)
-                }}
               />
             ))}
-            <Button
+            <ToggleButton
+              value="all"
               label="這一類全部（最多 100）"
-              variant={custom ? 'primary' : 'secondary'}
               isDisabled={available === 0}
-              onClick={() => setCustom(true)}
             />
-          </HStack>
+          </ToggleButtonGroup>
           <SegmentedControl
             label="對答案方式"
             value={mode}
@@ -134,7 +153,9 @@ export default function Practice() {
           />
           {available === 0 && <Text>這個類別暫時沒有題目。</Text>}
           {canStart ? (
-            <Button label={`開始練習（${count} 題）`} variant="primary" href={href} />
+            <HStack>
+              <Button label={`開始練習（${count} 題）`} variant="primary" size="md" href={href} />
+            </HStack>
           ) : (
             <Text type="supporting">題庫不足，暫時不能開這一輪。</Text>
           )}

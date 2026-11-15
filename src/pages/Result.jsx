@@ -1,5 +1,6 @@
 import { useLocation } from 'react-router-dom'
 import { Button } from '@astryxdesign/core/Button'
+import { EmptyState } from '@astryxdesign/core/EmptyState'
 import { Card } from '@astryxdesign/core/Card'
 import { Heading } from '@astryxdesign/core/Heading'
 import { HStack } from '@astryxdesign/core/HStack'
@@ -24,7 +25,12 @@ export default function Result() {
   return (
     <PageLayout title="練習結果">
       {total === 0 ? (
-        <Text>尚無作答紀錄。完成一輪練習後，這一頁會留下正確率和錯題。</Text>
+        <EmptyState
+          title="尚無作答紀錄"
+          description="完成一輪練習後，這一頁會留下正確率和錯題。"
+          headingLevel={2}
+          actions={<Button label="選擇考試" href="/exam" variant="primary" size="md" />}
+        />
       ) : (
         <Card padding={5}>
           <VStack gap={2} align="center">
@@ -68,11 +74,13 @@ export default function Result() {
         </VStack>
       )}
 
-      <HStack gap={2} wrap="wrap">
-        {examType && <Button label="再練一輪" variant="primary" href={again} />}
-        <Button label="選擇其他考試" variant="secondary" href="/exam" />
-        <Button label="錯題本" variant="secondary" href="/wrong" />
-      </HStack>
+      {total > 0 && (
+        <HStack gap={2} wrap="wrap">
+          {examType && <Button label="再練一輪" variant="primary" size="md" href={again} />}
+          <Button label="選擇其他考試" variant="secondary" size="md" href="/exam" />
+          <Button label="錯題本" variant="secondary" size="md" href="/wrong" />
+        </HStack>
+      )}
     </PageLayout>
   )
 }

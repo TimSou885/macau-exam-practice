@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
 import { Button } from '@astryxdesign/core/Button'
+import { EmptyState } from '@astryxdesign/core/EmptyState'
 import { Card } from '@astryxdesign/core/Card'
 import { HStack } from '@astryxdesign/core/HStack'
 import { Pagination } from '@astryxdesign/core/Pagination'
+import { ToggleButton, ToggleButtonGroup } from '@astryxdesign/core/ToggleButton'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
 import LoadingBlock, { LoadError } from '../components/LoadingBlock'
@@ -40,12 +42,12 @@ export default function WrongQuestions() {
   if (wrongIds.length === 0) {
     return (
       <PageLayout title="錯題本">
-        <Card padding={4}>
-          <VStack gap={3}>
-            <Text>目前沒有錯題紀錄。練習裡答錯的題目會自動出現在這裡。</Text>
-            <Button label="去練習" href="/exam" variant="primary" />
-          </VStack>
-        </Card>
+        <EmptyState
+          title="目前沒有錯題"
+          description="練習裡答錯的題目會自動出現在這裡。"
+          headingLevel={2}
+          actions={<Button label="去練習" href="/exam" variant="primary" size="md" />}
+        />
       </PageLayout>
     )
   }
@@ -56,24 +58,29 @@ export default function WrongQuestions() {
       description={`共 ${filtered.length} 題。答題複習若答對，會移出錯題本並把間隔往後排。`}
       actions={
         <HStack gap={2} wrap="wrap">
-          <Button label={`答題複習（${wrongIds.length} 題）`} href="/wrong/quiz" variant="primary" />
-          <Button label="清空錯題本" variant="secondary" onClick={() => setConfirmClear(true)} />
+          <Button label={`答題複習（${wrongIds.length} 題）`} href="/wrong/quiz" variant="primary" size="md" />
+          <Button label="清空錯題本" variant="secondary" size="md" onClick={() => setConfirmClear(true)} />
         </HStack>
       }
     >
-      <HStack gap={2} wrap="wrap">
+      <ToggleButtonGroup
+        label="錯題類別"
+        size="md"
+        value={filter}
+        onChange={(value) => {
+          if (typeof value !== 'string') return
+          setFilter(value)
+          setPage(1)
+        }}
+      >
         {filters.map((id) => (
-          <Button
+          <ToggleButton
             key={id}
+            value={id}
             label={id === 'all' ? '全部' : id === 'unknown' ? '未分類' : categoryName(id)}
-            variant={filter === id ? 'primary' : 'secondary'}
-            onClick={() => {
-              setFilter(id)
-              setPage(1)
-            }}
           />
         ))}
-      </HStack>
+      </ToggleButtonGroup>
       {loading && <LoadingBlock />}
       {error && <LoadError message={error.message} onRetry={reload} />}
       {!loading && !error && (
@@ -94,14 +101,17 @@ export default function WrongQuestions() {
                   ) : (
                     <Text>這題暫時載入不到（{entry.id}）。</Text>
                   )}
-                  <Button
-                    label="從錯題本移除"
-                    variant="secondary"
-                    onClick={() => {
-                      removeWrong(entry.id)
-                      removeFromReview(entry.id)
-                    }}
-                  />
+                  <HStack>
+                    <Button
+                      label="從錯題本移除"
+                      variant="secondary"
+                      size="md"
+                      onClick={() => {
+                        removeWrong(entry.id)
+                        removeFromReview(entry.id)
+                      }}
+                    />
+                  </HStack>
                 </VStack>
               </Card>
             )

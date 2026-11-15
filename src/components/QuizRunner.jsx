@@ -161,14 +161,11 @@ export default function QuizRunner({
 
   return (
     <VStack gap={4}>
-      <HStack gap={3} justify="between" align="center" wrap="wrap">
-        <Text type="supporting">
-          第 {index + 1} / {questions.length} 題
-          {failThreshold != null ? ` · 已錯 ${wrongCount} / ${failThreshold}` : ''}
-          {remaining != null ? ` · 剩餘 ${formatClock(remaining)}` : ''}
-        </Text>
-        <Button label="結束練習" variant="ghost" onClick={() => setConfirmQuit(true)} />
-      </HStack>
+      <Text type="supporting">
+        第 {index + 1} / {questions.length} 題
+        {failThreshold != null ? ` · 已錯 ${wrongCount} / ${failThreshold}` : ''}
+        {remaining != null ? ` · 剩餘 ${formatClock(remaining)}` : ''}
+      </Text>
       <ProgressBar
         label="作答進度"
         isLabelHidden
@@ -190,23 +187,26 @@ export default function QuizRunner({
       {!selectedKey && !showResult && (
         <Text type="supporting">請先選擇一個選項。也可以按鍵盤 1 到 4。</Text>
       )}
-      {!showResult ? (
-        <Button
-          label={submitting ? '驗證中…' : '提交答案'}
-          variant="primary"
-          width="100%"
-          isDisabled={!selectedKey || submitting}
-          isLoading={submitting}
-          onClick={handleSubmit}
-        />
-      ) : (
-        <Button
-          label={failedLock || isLast ? '查看結果' : '下一題'}
-          variant="primary"
-          width="100%"
-          onClick={handleNext}
-        />
-      )}
+      <HStack gap={2} justify="end" wrap="wrap">
+        <Button label="結束練習" variant="secondary" size="md" onClick={() => setConfirmQuit(true)} />
+        {!showResult ? (
+          <Button
+            label={submitting ? '驗證中…' : '提交答案'}
+            variant="primary"
+            size="md"
+            isDisabled={!selectedKey || submitting}
+            isLoading={submitting}
+            onClick={handleSubmit}
+          />
+        ) : (
+          <Button
+            label={failedLock || isLast ? '查看結果' : '下一題'}
+            variant="primary"
+            size="md"
+            onClick={handleNext}
+          />
+        )}
+      </HStack>
       <AlertDialog
         isOpen={confirmQuit}
         onOpenChange={setConfirmQuit}

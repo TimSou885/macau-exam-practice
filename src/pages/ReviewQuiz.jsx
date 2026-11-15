@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@astryxdesign/core/Button'
+import { EmptyState } from '@astryxdesign/core/EmptyState'
 import LoadingBlock, { LoadError } from '../components/LoadingBlock'
 import PageLayout, { PAGE_FORM_WIDTH } from '../components/PageLayout'
 import QuizRunner from '../components/QuizRunner'
@@ -37,7 +38,12 @@ export default function ReviewQuiz() {
   if (questions.length === 0) {
     return (
       <PageLayout title="目前沒有待複習題目" contentWidth={PAGE_FORM_WIDTH}>
-        <Button label="返回遺忘曲線複習" href="/review" variant="primary" />
+        <EmptyState
+          title="今天沒有到期題目"
+          description="答錯的題目會按間隔再出現。可以先回複習頁看下次日期。"
+          headingLevel={2}
+          actions={<Button label="返回遺忘曲線複習" href="/review" variant="primary" size="md" />}
+        />
       </PageLayout>
     )
   }

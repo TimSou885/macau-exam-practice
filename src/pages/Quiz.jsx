@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Button } from '@astryxdesign/core/Button'
+import { EmptyState } from '@astryxdesign/core/EmptyState'
 import LoadingBlock, { LoadError } from '../components/LoadingBlock'
 import PageLayout, { PAGE_FORM_WIDTH } from '../components/PageLayout'
 import QuizRunner from '../components/QuizRunner'
@@ -51,7 +52,12 @@ export default function Quiz() {
   if (questions.length === 0) {
     return (
       <PageLayout title="暫無題目" contentWidth={PAGE_FORM_WIDTH}>
-        <Button label="返回練習選擇" href={`/practice/${examType}`} variant="primary" />
+        <EmptyState
+          title="這個範圍沒有題目"
+          description="換一個類別，或回到練習選擇再抽一輪。"
+          headingLevel={2}
+          actions={<Button label="返回練習選擇" href={`/practice/${examType}`} variant="primary" size="md" />}
+        />
       </PageLayout>
     )
   }

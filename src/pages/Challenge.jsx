@@ -5,6 +5,7 @@ import { Card } from '@astryxdesign/core/Card'
 import { Heading } from '@astryxdesign/core/Heading'
 import { HStack } from '@astryxdesign/core/HStack'
 import { NumberInput } from '@astryxdesign/core/NumberInput'
+import { ToggleButton, ToggleButtonGroup } from '@astryxdesign/core/ToggleButton'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
 import PageLayout, { PAGE_FORM_WIDTH } from '../components/PageLayout'
@@ -35,44 +36,54 @@ export default function Challenge() {
     >
       <VStack gap={3}>
         <Heading level={2}>1. 選擇考試類型</Heading>
-        <HStack gap={3} wrap="wrap" align="stretch">
+        <ToggleButtonGroup
+          label="考試類型"
+          size="md"
+          value={examType}
+          onChange={(value) => {
+            if (typeof value !== 'string') return
+            setExamType(value)
+            setPreset(null)
+            setUseCustom(false)
+          }}
+        >
           {Object.values(EXAM_TYPES).map((exam) => {
             const total = counts[exam.id]
-            const active = examType === exam.id
             return (
-              <Button
+              <ToggleButton
                 key={exam.id}
+                value={exam.id}
                 label={total == null ? exam.name : `${exam.name}（${total} 題）`}
-                variant={active ? 'primary' : 'secondary'}
-                onClick={() => {
-                  setExamType(exam.id)
-                  setPreset(null)
-                  setUseCustom(false)
-                }}
               />
             )
           })}
-        </HStack>
+        </ToggleButtonGroup>
       </VStack>
 
       {examType && (
         <Card padding={4}>
           <VStack gap={3}>
             <Heading level={2}>2. 選擇題目數量</Heading>
-            <HStack gap={2} wrap="wrap" align="end">
+            <ToggleButtonGroup
+              label="題目數量"
+              size="md"
+              value={!useCustom && preset != null ? String(preset) : null}
+              onChange={(value) => {
+                if (typeof value !== 'string') return
+                setUseCustom(false)
+                setPreset(Number(value))
+              }}
+            >
               {PRESETS.map((value) => (
-                <Button
+                <ToggleButton
                   key={value}
+                  value={String(value)}
                   label={`${value} 題`}
-                  variant={!useCustom && preset === value ? 'primary' : 'secondary'}
                   isDisabled={value > available}
-                  onClick={() => {
-                    setUseCustom(false)
-                    setPreset(value)
-                  }}
                 />
               ))}
-              <NumberInput
+            </ToggleButtonGroup>
+            <NumberInput
                 label="自訂題數"
                 value={custom}
                 min={SESSION_QUESTION_MIN}
@@ -84,17 +95,19 @@ export default function Challenge() {
                 }}
                 onFocus={() => setUseCustom(true)}
               />
-            </HStack>
             {customInvalid && (
               <Text>自訂題數要在 {SESSION_QUESTION_MIN} 到 {SESSION_QUESTION_MAX} 之間。</Text>
             )}
             {available < SESSION_QUESTION_MIN && <Text>這個考試的題庫不足 {SESSION_QUESTION_MIN} 題。</Text>}
             {canStart ? (
-              <Button
-                label={`開始挑戰（${count} 題）`}
-                variant="primary"
-                onClick={() => navigate(`/challenge/${examType}?count=${count}`)}
-              />
+              <HStack>
+                <Button
+                  label={`開始挑戰（${count} 題）`}
+                  variant="primary"
+                  size="md"
+                  onClick={() => navigate(`/challenge/${examType}?count=${count}`)}
+                />
+              </HStack>
             ) : (
               <Text type="supporting">選好考試和題數後就可以開始。</Text>
             )}
