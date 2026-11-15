@@ -9,6 +9,7 @@ import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/Segme
 import { Switch } from '@astryxdesign/core/Switch'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
+import PageLayout, { PAGE_FORM_WIDTH } from '../components/PageLayout'
 import { EXAM_TYPES } from '../data'
 import { useCategoryCounts } from '../hooks/useQuestions'
 import LoadingBlock, { LoadError } from '../components/LoadingBlock'
@@ -30,15 +31,26 @@ export default function Practice() {
 
   if (!meta) {
     return (
-      <VStack gap={3}>
-        <Heading level={1}>找不到該考試類型</Heading>
+      <PageLayout title="找不到該考試類型" contentWidth={PAGE_FORM_WIDTH}>
         <Button label="返回選擇考試" href="/exam" variant="primary" />
-      </VStack>
+      </PageLayout>
     )
   }
 
-  if (loading && !counts) return <LoadingBlock />
-  if (error) return <LoadError message={error.message} onRetry={reload} />
+  if (loading && !counts) {
+    return (
+      <PageLayout title="練習" contentWidth={PAGE_FORM_WIDTH}>
+        <LoadingBlock />
+      </PageLayout>
+    )
+  }
+  if (error) {
+    return (
+      <PageLayout title="練習" contentWidth={PAGE_FORM_WIDTH}>
+        <LoadError message={error.message} onRetry={reload} />
+      </PageLayout>
+    )
+  }
 
   const available = counts?.[category] ?? 0
   const requested = custom ? available : preset
@@ -48,15 +60,12 @@ export default function Practice() {
   const href = `/quiz/${examType}?category=${category}&count=${count}&mode=${mode}&timed=${timed ? '1' : '0'}`
 
   return (
-    <VStack gap={6}>
-      <HStack gap={3} justify="between" align="center" wrap="wrap">
-        <VStack gap={1}>
-          <Heading level={1}>{meta.name} 練習</Heading>
-          <Text type="supporting">{meta.fullName}</Text>
-        </VStack>
-        <Button label="更換考試類型" href="/exam" variant="secondary" />
-      </HStack>
-
+    <PageLayout
+      title={`${meta.name} 練習`}
+      description={meta.fullName}
+      contentWidth={PAGE_FORM_WIDTH}
+      actions={<Button label="更換考試類型" href="/exam" variant="secondary" />}
+    >
       <VStack gap={2}>
         <Heading level={2}>選擇題目類別</Heading>
         <HStack gap={2} wrap="wrap">
@@ -137,6 +146,6 @@ export default function Practice() {
         description="正式 430 約 58 題、滿分 100、50 分合格。短練習的百分比只代表這一輪。"
         collapsible={false}
       />
-    </VStack>
+    </PageLayout>
   )
 }

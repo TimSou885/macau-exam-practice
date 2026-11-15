@@ -7,6 +7,7 @@ import { HStack } from '@astryxdesign/core/HStack'
 import { NumberInput } from '@astryxdesign/core/NumberInput'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
+import PageLayout, { PAGE_FORM_WIDTH } from '../components/PageLayout'
 import { EXAM_TYPES } from '../data'
 import { useExamCounts } from '../hooks/useQuestions'
 import { SESSION_QUESTION_MAX, SESSION_QUESTION_MIN, resolveSessionCount } from '../utils/questionLimit'
@@ -27,12 +28,11 @@ export default function Challenge() {
   const canStart = Boolean(examType && count && !customInvalid && available >= SESSION_QUESTION_MIN)
 
   return (
-    <VStack gap={6}>
-      <VStack gap={2}>
-        <Heading level={1}>挑戰模式</Heading>
-        <Text>全類別隨機出題。錯滿 5 題即失敗，失敗的那一題會先顯示解析。每輪 5 到 {SESSION_QUESTION_MAX} 題。</Text>
-      </VStack>
-
+    <PageLayout
+      title="挑戰模式"
+      description={`全類別隨機出題。錯滿 5 題即失敗，失敗的那一題會先顯示解析。每輪 5 到 ${SESSION_QUESTION_MAX} 題。`}
+      contentWidth={PAGE_FORM_WIDTH}
+    >
       <VStack gap={3}>
         <Heading level={2}>1. 選擇考試類型</Heading>
         <HStack gap={3} wrap="wrap" align="stretch">
@@ -101,6 +101,6 @@ export default function Challenge() {
           </VStack>
         </Card>
       )}
-    </VStack>
+    </PageLayout>
   )
 }

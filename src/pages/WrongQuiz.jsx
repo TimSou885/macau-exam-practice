@@ -1,11 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@astryxdesign/core/Button'
-import { Card } from '@astryxdesign/core/Card'
-import { Heading } from '@astryxdesign/core/Heading'
-import { Text } from '@astryxdesign/core/Text'
-import { VStack } from '@astryxdesign/core/VStack'
 import LoadingBlock, { LoadError } from '../components/LoadingBlock'
+import PageLayout, { PAGE_FORM_WIDTH } from '../components/PageLayout'
 import QuizRunner from '../components/QuizRunner'
 import { useQuestionsByIds } from '../hooks/useQuestions'
 import { useReviewSchedule, useStats, useWrongAnswers } from '../hooks/useStorage'
@@ -26,24 +23,35 @@ export default function WrongQuiz() {
 
   if (frozenIds.length === 0 && !saved) {
     return (
-      <VStack gap={3}>
-        <Heading level={1}>目前沒有錯題可複習</Heading>
+      <PageLayout title="目前沒有錯題可複習" contentWidth={PAGE_FORM_WIDTH}>
         <Button label="返回錯題本" href="/wrong" variant="primary" />
-      </VStack>
+      </PageLayout>
     )
   }
-  if (!saved && loading) return <LoadingBlock />
-  if (error) return <LoadError message={error.message} onRetry={reload} />
+  if (!saved && loading) {
+    return (
+      <PageLayout title="錯題本" contentWidth={PAGE_FORM_WIDTH}>
+        <LoadingBlock />
+      </PageLayout>
+    )
+  }
+  if (error) {
+    return (
+      <PageLayout title="錯題本" contentWidth={PAGE_FORM_WIDTH}>
+        <LoadError message={error.message} onRetry={reload} />
+      </PageLayout>
+    )
+  }
   if (questions.length === 0) {
     return (
-      <VStack gap={3}>
-        <Heading level={1}>目前沒有錯題可複習</Heading>
+      <PageLayout title="目前沒有錯題可複習" contentWidth={PAGE_FORM_WIDTH}>
         <Button label="返回錯題本" href="/wrong" variant="primary" />
-      </VStack>
+      </PageLayout>
     )
   }
 
   return (
+    <PageLayout title="錯題本" contentWidth={PAGE_FORM_WIDTH}>
     <QuizRunner
       sessionKey={sessionKey}
       href="/wrong/quiz"
@@ -71,6 +79,7 @@ export default function WrongQuiz() {
       }}
       onQuit={() => navigate('/wrong')}
     />
+    </PageLayout>
   )
 }
 

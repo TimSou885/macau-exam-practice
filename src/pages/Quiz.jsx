@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { Heading } from '@astryxdesign/core/Heading'
-import { VStack } from '@astryxdesign/core/VStack'
 import { Button } from '@astryxdesign/core/Button'
 import LoadingBlock, { LoadError } from '../components/LoadingBlock'
+import PageLayout, { PAGE_FORM_WIDTH } from '../components/PageLayout'
 import QuizRunner from '../components/QuizRunner'
+import { EXAM_TYPES } from '../data'
 import { useQuestionsList } from '../hooks/useQuestions'
 import { useReviewSchedule, useStats, useWrongAnswers } from '../hooks/useStorage'
 import { clampSessionLimit } from '../utils/questionLimit'
@@ -30,19 +30,34 @@ export default function Quiz() {
   const { recordAnswer } = useStats()
   const questions = saved?.questions ?? loaded
   const minutes = Math.max(5, Math.round((questions.length || count) * 90 / 58))
+  const examName = EXAM_TYPES[examType]?.name
+  const title = examName ? `${examName} 練習` : '練習'
+  const description = mode === 'exam' ? '做完再對' : '邊做邊對'
 
-  if (!saved && loading) return <LoadingBlock />
-  if (error) return <LoadError message={error.message} onRetry={reload} />
+  if (!saved && loading) {
+    return (
+      <PageLayout title={title} description={description} contentWidth={PAGE_FORM_WIDTH}>
+        <LoadingBlock />
+      </PageLayout>
+    )
+  }
+  if (error) {
+    return (
+      <PageLayout title={title} description={description} contentWidth={PAGE_FORM_WIDTH}>
+        <LoadError message={error.message} onRetry={reload} />
+      </PageLayout>
+    )
+  }
   if (questions.length === 0) {
     return (
-      <VStack gap={3}>
-        <Heading level={1}>暫無題目</Heading>
+      <PageLayout title="暫無題目" contentWidth={PAGE_FORM_WIDTH}>
         <Button label="返回練習選擇" href={`/practice/${examType}`} variant="primary" />
-      </VStack>
+      </PageLayout>
     )
   }
 
   return (
+    <PageLayout title={title} description={description} contentWidth={PAGE_FORM_WIDTH}>
     <QuizRunner
       sessionKey={sessionKey}
       href={href}
@@ -64,6 +79,7 @@ export default function Quiz() {
       }}
       onQuit={() => navigate(`/practice/${examType}?category=${category}`)}
     />
+    </PageLayout>
   )
 }
 

@@ -12,7 +12,3 @@
   font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'DM Sans', system-ui, sans-serif;
 }
 
-.app-frame {
-  width: min(100%, 56rem);
-  margin-inline: auto;
-}

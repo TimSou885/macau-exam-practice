@@ -2,10 +2,10 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import { Button } from '@astryxdesign/core/Button'
 import { Card } from '@astryxdesign/core/Card'
-import { Heading } from '@astryxdesign/core/Heading'
 import { HStack } from '@astryxdesign/core/HStack'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
+import PageLayout from '../components/PageLayout'
 
 export default function ChallengeResult() {
   const location = useLocation()
@@ -20,18 +20,16 @@ export default function ChallengeResult() {
 
   const { success, total, wrongCount = 0, answeredCount, quitEarly } = state
 
+  const title = success ? '挑戰成功' : '挑戰失敗'
+
   return (
-    <VStack gap={6}>
+    <PageLayout title={title}>
       <Card padding={5}>
         <VStack gap={2} align="center">
           {success ? (
-            <>
-              <Heading level={1}>挑戰成功</Heading>
-              <Text>全對，共 {total} 題全部答對。</Text>
-            </>
+            <Text>全對，共 {total} 題全部答對。</Text>
           ) : (
             <>
-              <Heading level={1}>挑戰失敗</Heading>
               <Text>
                 {wrongCount >= 5
                   ? `已錯 ${wrongCount} 題。失敗那一題的解析已在上一頁看過，錯題也在錯題本。`
@@ -51,6 +49,6 @@ export default function ChallengeResult() {
         <Button label="錯題本" variant="secondary" href="/wrong" />
         <Button label="返回首頁" variant="secondary" href="/" />
       </HStack>
-    </VStack>
+    </PageLayout>
   )
 }

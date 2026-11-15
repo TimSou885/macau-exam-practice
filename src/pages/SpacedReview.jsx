@@ -8,6 +8,7 @@ import { Card } from '@astryxdesign/core/Card'
 import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
+import PageLayout from '../components/PageLayout'
 import { categoryName } from '../data'
 import { useReviewSchedule } from '../hooks/useStorage'
 import { formatMacau } from '../utils/formatWhen'
@@ -29,11 +30,10 @@ export default function SpacedReview() {
     : null
 
   return (
-    <VStack gap={6}>
-      <VStack gap={2}>
-        <Heading level={1}>遺忘曲線複習</Heading>
-        <Text>答錯的題目會在 1、3、7、15、30 天後再出現。複習再答錯，就從 1 天後重來。</Text>
-      </VStack>
+    <PageLayout
+      title="遺忘曲線複習"
+      description="答錯的題目會在 1、3、7、15、30 天後再出現。複習再答錯，就從 1 天後重來。"
+    >
       {flash && <Banner status="success" title="複習完成" description={flash} collapsible={false} />}
       <Card padding={4}>
         <VStack gap={3}>
@@ -92,6 +92,6 @@ export default function SpacedReview() {
       <Text type="supporting">
         <Button label="前往錯題本" href="/wrong" variant="ghost" />
       </Text>
-    </VStack>
+    </PageLayout>
   )
 }

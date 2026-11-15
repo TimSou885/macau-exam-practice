@@ -1,9 +1,8 @@
 import { useMemo } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Button } from '@astryxdesign/core/Button'
-import { Heading } from '@astryxdesign/core/Heading'
-import { VStack } from '@astryxdesign/core/VStack'
 import LoadingBlock, { LoadError } from '../components/LoadingBlock'
+import PageLayout, { PAGE_FORM_WIDTH } from '../components/PageLayout'
 import QuizRunner from '../components/QuizRunner'
 import { useQuestionsList } from '../hooks/useQuestions'
 import { useReviewSchedule, useStats, useWrongAnswers } from '../hooks/useStorage'
@@ -32,24 +31,35 @@ export default function ChallengeQuiz() {
 
   if (!validExam) {
     return (
-      <VStack gap={3}>
-        <Heading level={1}>無效的考試類型</Heading>
+      <PageLayout title="無效的考試類型" contentWidth={PAGE_FORM_WIDTH}>
         <Button label="返回挑戰選擇" href="/challenge" variant="primary" />
-      </VStack>
+      </PageLayout>
     )
   }
-  if (!saved && loading) return <LoadingBlock />
-  if (error) return <LoadError message={error.message} onRetry={reload} />
+  if (!saved && loading) {
+    return (
+      <PageLayout title="挑戰" contentWidth={PAGE_FORM_WIDTH}>
+        <LoadingBlock />
+      </PageLayout>
+    )
+  }
+  if (error) {
+    return (
+      <PageLayout title="挑戰" contentWidth={PAGE_FORM_WIDTH}>
+        <LoadError message={error.message} onRetry={reload} />
+      </PageLayout>
+    )
+  }
   if (questions.length === 0) {
     return (
-      <VStack gap={3}>
-        <Heading level={1}>暫無題目</Heading>
+      <PageLayout title="暫無題目" contentWidth={PAGE_FORM_WIDTH}>
         <Button label="返回挑戰選擇" href="/challenge" variant="primary" />
-      </VStack>
+      </PageLayout>
     )
   }
 
   return (
+    <PageLayout title="挑戰" description="錯滿 5 題即結束，並先看那一題的解析。" contentWidth={PAGE_FORM_WIDTH}>
     <QuizRunner
       sessionKey={sessionKey}
       href={href}
@@ -79,5 +89,6 @@ export default function ChallengeQuiz() {
       }}
       onQuit={() => navigate('/challenge')}
     />
+    </PageLayout>
   )
 }

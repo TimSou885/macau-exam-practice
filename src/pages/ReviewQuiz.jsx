@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@astryxdesign/core/Button'
-import { Heading } from '@astryxdesign/core/Heading'
-import { VStack } from '@astryxdesign/core/VStack'
 import LoadingBlock, { LoadError } from '../components/LoadingBlock'
+import PageLayout, { PAGE_FORM_WIDTH } from '../components/PageLayout'
 import QuizRunner from '../components/QuizRunner'
 import { useQuestionsByIds } from '../hooks/useQuestions'
 import { useReviewSchedule, useStats } from '../hooks/useStorage'
@@ -21,18 +20,30 @@ export default function ReviewQuiz() {
   const shuffled = useStableShuffle(loaded)
   const questions = saved?.questions ?? shuffled
 
-  if (!saved && loading) return <LoadingBlock />
-  if (error) return <LoadError message={error.message} onRetry={reload} />
+  if (!saved && loading) {
+    return (
+      <PageLayout title="間隔複習" contentWidth={PAGE_FORM_WIDTH}>
+        <LoadingBlock />
+      </PageLayout>
+    )
+  }
+  if (error) {
+    return (
+      <PageLayout title="間隔複習" contentWidth={PAGE_FORM_WIDTH}>
+        <LoadError message={error.message} onRetry={reload} />
+      </PageLayout>
+    )
+  }
   if (questions.length === 0) {
     return (
-      <VStack gap={3}>
-        <Heading level={1}>目前沒有待複習題目</Heading>
+      <PageLayout title="目前沒有待複習題目" contentWidth={PAGE_FORM_WIDTH}>
         <Button label="返回遺忘曲線複習" href="/review" variant="primary" />
-      </VStack>
+      </PageLayout>
     )
   }
 
   return (
+    <PageLayout title="間隔複習" contentWidth={PAGE_FORM_WIDTH}>
     <QuizRunner
       sessionKey={sessionKey}
       href="/review/session"
@@ -56,6 +67,7 @@ export default function ReviewQuiz() {
       }}
       onQuit={() => navigate('/review')}
     />
+    </PageLayout>
   )
 }
 

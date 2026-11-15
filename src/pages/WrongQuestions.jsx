@@ -2,12 +2,12 @@ import { useMemo, useState } from 'react'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
 import { Button } from '@astryxdesign/core/Button'
 import { Card } from '@astryxdesign/core/Card'
-import { Heading } from '@astryxdesign/core/Heading'
 import { HStack } from '@astryxdesign/core/HStack'
 import { Pagination } from '@astryxdesign/core/Pagination'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
 import LoadingBlock, { LoadError } from '../components/LoadingBlock'
+import PageLayout from '../components/PageLayout'
 import QuestionView from '../components/QuestionView'
 import { categoryName } from '../data'
 import { useQuestionsByIdsWithAnswers } from '../hooks/useQuestions'
@@ -39,28 +39,28 @@ export default function WrongQuestions() {
 
   if (wrongIds.length === 0) {
     return (
-      <VStack gap={4}>
-        <Heading level={1}>錯題本</Heading>
+      <PageLayout title="錯題本">
         <Card padding={4}>
           <VStack gap={3}>
             <Text>目前沒有錯題紀錄。練習裡答錯的題目會自動出現在這裡。</Text>
             <Button label="去練習" href="/exam" variant="primary" />
           </VStack>
         </Card>
-      </VStack>
+      </PageLayout>
     )
   }
 
   return (
-    <VStack gap={5}>
-      <HStack gap={2} justify="between" align="center" wrap="wrap">
-        <Heading level={1}>錯題本</Heading>
+    <PageLayout
+      title="錯題本"
+      description={`共 ${filtered.length} 題。答題複習若答對，會移出錯題本並把間隔往後排。`}
+      actions={
         <HStack gap={2} wrap="wrap">
           <Button label={`答題複習（${wrongIds.length} 題）`} href="/wrong/quiz" variant="primary" />
           <Button label="清空錯題本" variant="secondary" onClick={() => setConfirmClear(true)} />
         </HStack>
-      </HStack>
-      <Text>共 {filtered.length} 題。答題複習若答對，會移出錯題本並把間隔往後排。</Text>
+      }
+    >
       <HStack gap={2} wrap="wrap">
         {filters.map((id) => (
           <Button
@@ -132,6 +132,6 @@ export default function WrongQuestions() {
           setConfirmClear(false)
         }}
       />
-    </VStack>
+    </PageLayout>
   )
 }

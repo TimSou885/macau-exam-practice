@@ -5,6 +5,7 @@ import { Heading } from '@astryxdesign/core/Heading'
 import { HStack } from '@astryxdesign/core/HStack'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
+import PageLayout from '../components/PageLayout'
 import QuestionView from '../components/QuestionView'
 import { EXAM_TYPES, categoryName } from '../data'
 import { loadLastResult } from '../utils/sessionStore'
@@ -21,8 +22,7 @@ export default function Result() {
     : '/exam'
 
   return (
-    <VStack gap={6}>
-      <Heading level={1}>練習結果</Heading>
+    <PageLayout title="練習結果">
       {total === 0 ? (
         <Text>尚無作答紀錄。完成一輪練習後，這一頁會留下正確率和錯題。</Text>
       ) : (
@@ -73,6 +73,6 @@ export default function Result() {
         <Button label="選擇其他考試" variant="secondary" href="/exam" />
         <Button label="錯題本" variant="secondary" href="/wrong" />
       </HStack>
-    </VStack>
+    </PageLayout>
   )
 }

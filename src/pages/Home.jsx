@@ -7,6 +7,7 @@ import { Heading } from '@astryxdesign/core/Heading'
 import { HStack } from '@astryxdesign/core/HStack'
 import { Text } from '@astryxdesign/core/Text'
 import { VStack } from '@astryxdesign/core/VStack'
+import PageLayout from '../components/PageLayout'
 import { useReviewSchedule, useStats, useWrongAnswers } from '../hooks/useStorage'
 import { loadAnySession } from '../utils/sessionStore'
 
@@ -20,14 +21,10 @@ export default function Home() {
   const rate = answered > 0 ? Math.round((stats.totalCorrect / answered) * 100) : null
 
   return (
-    <VStack gap={6}>
-      <VStack gap={2}>
-        <Heading level={1}>澳門政府統考練習</Heading>
-        <Text type="large">
-          430 學士學位程度綜合能力評估，以及 260 技術員程度綜合能力評估。選一小輪題目練習，答錯的會進錯題本。
-        </Text>
-      </VStack>
-
+    <PageLayout
+      title="澳門政府統考練習"
+      description="430 學士學位程度綜合能力評估，以及 260 技術員程度綜合能力評估。選一小輪題目練習，答錯的會進錯題本。"
+    >
       {(session || dueIds.length > 0 || wrongIds.length > 0) && (
         <HStack gap={3} wrap="wrap">
           {session && (
@@ -98,6 +95,6 @@ export default function Home() {
           <Text type="supporting">正式開考資訊請以公職局網站為準。本站不是官方網站。</Text>
         </VStack>
       </Card>
-    </VStack>
+    </PageLayout>
   )
 }

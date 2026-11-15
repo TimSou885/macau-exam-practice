@@ -3,10 +3,8 @@ import { AppShell } from '@astryxdesign/core/AppShell'
 import { Button } from '@astryxdesign/core/Button'
 import { SideNav } from '@astryxdesign/core/SideNav'
 import { SideNavItem } from '@astryxdesign/core/SideNav'
-import { Text } from '@astryxdesign/core/Text'
 import { TopNav } from '@astryxdesign/core/TopNav'
 import { TopNavHeading } from '@astryxdesign/core/TopNav'
-import { VStack } from '@astryxdesign/core/VStack'
 import NativeLink from './NativeLink'
 import { useColorModeActions } from '../theme/AppTheme'
 
@@ -34,9 +32,9 @@ export default function Layout() {
 
   return (
     <AppShell
-      height="auto"
+      height="fill"
       variant="section"
-      contentPadding={4}
+      contentPadding={0}
       topNav={
         <TopNav
           label="主選單"
@@ -69,31 +67,7 @@ export default function Layout() {
         </SideNav>
       }
     >
-      <div className="app-frame">
-        <VStack gap={6}>
-          <Outlet />
-          <VStack gap={1}>
-            <Text type="supporting">
-              非官方練習站。正式開考資訊請以公職局為準。進度只存在這台裝置的瀏覽器。
-            </Text>
-            <Text type="supporting">
-              <NativeLink href="/about">關於本站與常見問題</NativeLink>
-              {' · '}
-              <NativeLink href="http://concurso-uni.safp.gov.mo/" isExternal>
-                澳門公職開考
-              </NativeLink>
-              {' · '}
-              <NativeLink href="https://thesoustudio.com/" isExternal>
-                Sou Studio
-              </NativeLink>
-              {' · '}
-              <NativeLink href="https://mauroad.com/" isExternal>
-                mauroad
-              </NativeLink>
-            </Text>
-          </VStack>
-        </VStack>
-      </div>
+      <Outlet />
     </AppShell>
   )
 }
