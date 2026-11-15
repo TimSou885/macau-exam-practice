@@ -8,17 +8,10 @@ import { VStack } from '@astryxdesign/core/VStack'
 export const PAGE_CONTENT_WIDTH = 896
 export const PAGE_FORM_WIDTH = 640
 
-export default function PageLayout({
-  title,
-  description,
-  actions,
-  contentWidth = PAGE_CONTENT_WIDTH,
-  children,
-}) {
+export default function PageLayout({ title, description, actions, children }) {
   return (
     <Layout
       height="auto"
-      contentWidth={contentWidth}
       content={
         <LayoutContent>
           <VStack gap={5}>

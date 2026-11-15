@@ -124,9 +124,7 @@ test('appearance control switches color mode and Chinese font is requested', asy
 test('mobile navigation includes the wrong book', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/')
-  const opener = page.getByRole('button', { name: /導覽|選單|menu/i })
-  await opener.click()
-  await page.getByRole('dialog').getByRole('link', { name: '錯題本' }).click()
+  await page.getByRole('navigation', { name: '主要選單' }).getByRole('link', { name: '錯題本' }).click()
   await expect(page).toHaveURL(/\/wrong$/)
 })
 

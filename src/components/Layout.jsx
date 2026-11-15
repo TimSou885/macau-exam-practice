@@ -1,13 +1,14 @@
-import { Outlet, useLocation } from 'react-router-dom'
+import { useNavigate, Outlet, useLocation } from 'react-router-dom'
 import { AppShell } from '@astryxdesign/core/AppShell'
 import { Button } from '@astryxdesign/core/Button'
+import { Tab, TabList } from '@astryxdesign/core/TabList'
 import { Text } from '@astryxdesign/core/Text'
-import { TopNav, TopNavHeading, TopNavItem } from '@astryxdesign/core/TopNav'
+import { TopNav, TopNavHeading } from '@astryxdesign/core/TopNav'
 import { VStack } from '@astryxdesign/core/VStack'
 import NativeLink from './NativeLink'
 import { useColorModeActions } from '../theme/AppTheme'
 
-const NAV = [
+const TABS = [
   { to: '/', label: '首頁', match: (path) => path === '/' },
   {
     to: '/exam',
@@ -19,7 +20,7 @@ const NAV = [
       path === '/result',
   },
   { to: '/challenge', label: '挑戰', match: (path) => path.startsWith('/challenge') },
-  { to: '/review', label: '間隔複習', match: (path) => path.startsWith('/review') },
+  { to: '/review', label: '複習', match: (path) => path.startsWith('/review') },
   { to: '/wrong', label: '錯題本', match: (path) => path.startsWith('/wrong') },
 ]
 
@@ -35,64 +36,69 @@ function isImmersive(pathname) {
 
 export default function Layout() {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   const { mode, cycle } = useColorModeActions()
   const immersive = isImmersive(pathname)
+  const selected = TABS.find((tab) => tab.match(pathname))?.to ?? '/'
 
   return (
-    <AppShell
-      height="auto"
-      variant="section"
-      contentPadding={0}
-      topNav={
-        <TopNav
-          label="主要選單"
-          heading={<TopNavHeading heading="澳門統考練習" headingHref="/" />}
-          startContent={
-            <>
-              {NAV.map((item) => (
-                <TopNavItem
-                  key={item.to}
-                  href={item.to}
-                  label={item.label}
-                  isSelected={item.match(pathname)}
-                />
+    <div className="app-stage">
+      <div className="app-phone">
+        <div className="app-phone-body">
+          <AppShell
+            height="fill"
+            variant="surface"
+            contentPadding={0}
+            mobileNav={false}
+            topNav={
+              <TopNav
+                label="應用標題"
+                heading={<TopNavHeading heading="澳門統考練習" headingHref="/" />}
+                endContent={
+                  <Button
+                    label={`外觀：${MODE_LABEL[mode]}`}
+                    variant="secondary"
+                    size="sm"
+                    onClick={cycle}
+                  />
+                }
+              />
+            }
+          >
+            <Outlet />
+            {immersive ? null : (
+              <VStack gap={1} padding={4}>
+                <Text type="supporting">
+                  非官方練習站。正式開考資訊請以公職局為準。進度只存在這台裝置的瀏覽器。
+                </Text>
+                <Text type="supporting">
+                  <NativeLink href="/about">關於本站</NativeLink>
+                  {' · '}
+                  <NativeLink href="http://concurso-uni.safp.gov.mo/" isExternal>
+                    公職開考
+                  </NativeLink>
+                </Text>
+              </VStack>
+            )}
+          </AppShell>
+        </div>
+        {immersive ? null : (
+          <div className="app-tabbar">
+            <TabList
+              aria-label="主要選單"
+              layout="fill"
+              value={selected}
+              onChange={(value) => {
+                if (typeof value === 'string') navigate(value)
+              }}
+            >
+              {TABS.map((tab) => (
+                <Tab key={tab.to} value={tab.to} label={tab.label} href={tab.to} />
               ))}
-            </>
-          }
-          endContent={
-            <Button
-              label={`外觀：${MODE_LABEL[mode]}`}
-              variant="secondary"
-              size="md"
-              onClick={cycle}
-            />
-          }
-        />
-      }
-    >
-      <Outlet />
-      {immersive ? null : (
-        <VStack gap={1} className="site-footer" padding={6}>
-          <Text type="supporting">
-            非官方練習站。正式開考資訊請以公職局為準。進度只存在這台裝置的瀏覽器。
-          </Text>
-          <Text type="supporting">
-            <NativeLink href="/about">關於本站與常見問題</NativeLink>
-            {' · '}
-            <NativeLink href="http://concurso-uni.safp.gov.mo/" isExternal>
-              澳門公職開考
-            </NativeLink>
-            {' · '}
-            <NativeLink href="https://thesoustudio.com/" isExternal>
-              Sou Studio
-            </NativeLink>
-            {' · '}
-            <NativeLink href="https://mauroad.com/" isExternal>
-              mauroad
-            </NativeLink>
-          </Text>
-        </VStack>
-      )}
-    </AppShell>
+            </TabList>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }

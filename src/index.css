@@ -13,9 +13,46 @@
   font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Figtree', system-ui, sans-serif;
 }
 
-.home-hero,
-.site-footer {
-  width: 100%;
-  text-align: center;
+.app-stage {
+  min-height: 100dvh;
+  background: #d4d4d4;
+}
+
+[data-color-mode='dark'] .app-stage {
+  background: #0a0a0a;
+}
+
+.app-phone {
+  width: min(100%, 26rem);
+  height: 100dvh;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--color-bg, #fff);
+}
+
+.app-phone-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-phone-body > * {
+  flex: 1;
+  min-height: 0;
+}
+
+.app-tabbar {
+  flex: none;
+  border-top: 1px solid #e5e5e5;
+  background: var(--color-bg, #fff);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+[data-color-mode='dark'] .app-tabbar {
+  border-top-color: #262626;
+  background: #171717;
 }
 
