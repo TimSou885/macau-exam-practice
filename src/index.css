@@ -13,3 +13,9 @@
   font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Figtree', system-ui, sans-serif;
 }
 
+.home-hero,
+.site-footer {
+  width: 100%;
+  text-align: center;
+}
+
