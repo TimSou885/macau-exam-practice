@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { createHashRouter, createBrowserRouter, createRoutesFromElements, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import Home from './pages/Home'
 import ExamSelect from './pages/ExamSelect'
@@ -14,26 +14,25 @@ import SpacedReview from './pages/SpacedReview'
 import ReviewQuiz from './pages/ReviewQuiz'
 import NotFound from './pages/NotFound'
 
-function App() {
-  return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route path="/" element={<Home />} />
-        <Route path="/exam" element={<ExamSelect />} />
-        <Route path="/practice/:examType" element={<Practice />} />
-        <Route path="/quiz/:examType" element={<Quiz />} />
-        <Route path="/result" element={<Result />} />
-        <Route path="/wrong" element={<WrongQuestions />} />
-        <Route path="/wrong/quiz" element={<WrongQuiz />} />
-        <Route path="/review" element={<SpacedReview />} />
-        <Route path="/review/session" element={<ReviewQuiz />} />
-        <Route path="/challenge" element={<Challenge />} />
-        <Route path="/challenge/result" element={<ChallengeResult />} />
-        <Route path="/challenge/:examType" element={<ChallengeQuiz />} />
-        <Route path="*" element={<NotFound />} />
-      </Route>
-    </Routes>
-  )
-}
+const routes = createRoutesFromElements(
+  <Route element={<Layout />}>
+    <Route path="/" element={<Home />} />
+    <Route path="/exam" element={<ExamSelect />} />
+    <Route path="/practice/:examType" element={<Practice />} />
+    <Route path="/quiz/:examType" element={<Quiz />} />
+    <Route path="/result" element={<Result />} />
+    <Route path="/wrong" element={<WrongQuestions />} />
+    <Route path="/wrong/quiz" element={<WrongQuiz />} />
+    <Route path="/review" element={<SpacedReview />} />
+    <Route path="/review/session" element={<ReviewQuiz />} />
+    <Route path="/challenge" element={<Challenge />} />
+    <Route path="/challenge/result" element={<ChallengeResult />} />
+    <Route path="/challenge/:examType" element={<ChallengeQuiz />} />
+    <Route path="*" element={<NotFound />} />
+  </Route>
+)
 
-export default App
+export const router =
+  import.meta.env.VITE_USE_HASH_ROUTER === 'true'
+    ? createHashRouter(routes)
+    : createBrowserRouter(routes)

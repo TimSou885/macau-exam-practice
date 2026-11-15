@@ -1,100 +1,142 @@
-import { useParams, Link, useSearchParams } from 'react-router-dom'
+import { useState } from 'react'
+import { useParams, useSearchParams } from 'react-router-dom'
+import { Banner } from '@astryxdesign/core/Banner'
+import { Button } from '@astryxdesign/core/Button'
+import { Card } from '@astryxdesign/core/Card'
+import { Heading } from '@astryxdesign/core/Heading'
+import { HStack } from '@astryxdesign/core/HStack'
+import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
+import { Switch } from '@astryxdesign/core/Switch'
+import { Text } from '@astryxdesign/core/Text'
+import { VStack } from '@astryxdesign/core/VStack'
 import { EXAM_TYPES } from '../data'
-import { useQuestionCount } from '../hooks/useQuestions'
-import LoadingBlock from '../components/LoadingBlock'
-import LoadError from '../components/LoadError'
+import { useCategoryCounts } from '../hooks/useQuestions'
+import LoadingBlock, { LoadError } from '../components/LoadingBlock'
+import { SESSION_QUESTION_MAX, SESSION_QUESTION_MIN, resolveSessionCount } from '../utils/questionLimit'
+
+const PRESETS = [10, 20, 50]
 
 export default function Practice() {
   const { examType } = useParams()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const category = searchParams.get('category') || 'all'
-
   const meta = EXAM_TYPES[examType]
-  const { count, loading, error } = useQuestionCount(examType, category)
+  const categoryIds = meta ? ['all', ...meta.categories.map((item) => item.id)] : []
+  const { counts, loading, error, reload } = useCategoryCounts(examType, categoryIds)
+  const [preset, setPreset] = useState(20)
+  const [custom, setCustom] = useState(false)
+  const [mode, setMode] = useState('tutor')
+  const [timed, setTimed] = useState(false)
 
   if (!meta) {
     return (
-      <div className="text-center py-12">
-        <p className="text-stone-600 dark:text-stone-400">找不到該考試類型。</p>
-        <Link to="/exam" className="mt-4 inline-block text-primary-600 dark:text-primary-400 underline">
-          返回選擇考試
-        </Link>
-      </div>
+      <VStack gap={3}>
+        <Heading level={1}>找不到該考試類型</Heading>
+        <Button label="返回選擇考試" href="/exam" variant="primary" />
+      </VStack>
     )
   }
 
-  if (loading) return <LoadingBlock />
-  if (error) return <LoadError message={error.message} />
+  if (loading && !counts) return <LoadingBlock />
+  if (error) return <LoadError message={error.message} onRetry={reload} />
 
-  const questionCount = count ?? 0
+  const available = counts?.[category] ?? 0
+  const requested = custom ? available : preset
+  const count = resolveSessionCount(requested === 0 ? preset : requested, available)
+  const minutes = Math.max(5, Math.round((count * 90) / 58))
+  const canStart = available > 0 && count >= Math.min(SESSION_QUESTION_MIN, available)
+  const href = `/quiz/${examType}?category=${category}&count=${count}&mode=${mode}&timed=${timed ? '1' : '0'}`
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">
-            {meta.name} 練習
-          </h1>
-          <p className="mt-1 text-stone-600 dark:text-stone-400">
-            {meta.fullName}
-          </p>
-        </div>
-        <Link
-          to="/exam"
-          className="text-sm font-medium text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200"
-        >
-          ← 更換考試類型
-        </Link>
-      </div>
+    <VStack gap={6}>
+      <HStack gap={3} justify="between" align="center" wrap="wrap">
+        <VStack gap={1}>
+          <Heading level={1}>{meta.name} 練習</Heading>
+          <Text type="supporting">{meta.fullName}</Text>
+        </VStack>
+        <Button label="更換考試類型" href="/exam" variant="secondary" />
+      </HStack>
 
-      <section>
-        <h2 className="text-sm font-semibold text-stone-700 dark:text-stone-300 mb-3">
-          選擇題目類別
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            to={`/practice/${examType}`}
-            className={`rounded-lg px-4 py-2.5 min-h-[44px] text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
-              category === 'all'
-                ? 'bg-primary-600 text-white dark:bg-primary-500'
-                : 'bg-stone-200 text-stone-700 hover:bg-stone-300 dark:bg-stone-700 dark:text-stone-300 dark:hover:bg-stone-600'
-            }`}
-          >
-            全部
-          </Link>
-          {meta.categories.map((cat) => (
-            <Link
-              key={cat.id}
-              to={`/practice/${examType}?category=${cat.id}`}
-              className={`rounded-lg px-4 py-2.5 min-h-[44px] text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
-                category === cat.id
-                  ? 'bg-primary-600 text-white dark:bg-primary-500'
-                  : 'bg-stone-200 text-stone-700 hover:bg-stone-300 dark:bg-stone-700 dark:text-stone-300 dark:hover:bg-stone-600'
-              }`}
-            >
-              {cat.name}
-            </Link>
-          ))}
-        </div>
-      </section>
+      <VStack gap={2}>
+        <Heading level={2}>選擇題目類別</Heading>
+        <HStack gap={2} wrap="wrap">
+          {categoryIds.map((id) => {
+            const name = id === 'all' ? '全部' : meta.categories.find((item) => item.id === id)?.name
+            const total = counts?.[id]
+            const selected = category === id
+            return (
+              <Button
+                key={id}
+                label={total == null ? name : `${name} ${total}`}
+                variant={selected ? 'primary' : 'secondary'}
+                onClick={() => {
+                  const next = new URLSearchParams(searchParams)
+                  if (id === 'all') next.delete('category')
+                  else next.set('category', id)
+                  setSearchParams(next)
+                }}
+              />
+            )
+          })}
+        </HStack>
+      </VStack>
 
-      <section className="rounded-xl border border-stone-200 bg-white p-6 dark:border-stone-700 dark:bg-stone-800/50">
-        <p className="text-stone-600 dark:text-stone-400">
-          本類別共 <strong className="text-stone-900 dark:text-stone-100">{questionCount}</strong> 題。
-        </p>
-        {questionCount === 0 ? (
-          <p className="mt-4 text-stone-500 dark:text-stone-400">
-            暫無該類別題目，可選擇「全部」或其他類別練習。
-          </p>
-        ) : (
-          <Link
-            to={`/quiz/${examType}?category=${category}`}
-            className="mt-6 inline-flex items-center justify-center rounded-xl bg-primary-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[44px]"
+      <Card padding={4}>
+        <VStack gap={4}>
+          <Text>
+            這一輪從本類別抽 <strong>{canStart ? count : 0}</strong> 題（題庫 {available} 題，每輪最多 {SESSION_QUESTION_MAX} 題）。
+          </Text>
+          <HStack gap={2} wrap="wrap">
+            {PRESETS.map((value) => (
+              <Button
+                key={value}
+                label={`${value} 題`}
+                variant={!custom && preset === value ? 'primary' : 'secondary'}
+                isDisabled={value > available}
+                onClick={() => {
+                  setCustom(false)
+                  setPreset(value)
+                }}
+              />
+            ))}
+            <Button
+              label="這一類全部（最多 100）"
+              variant={custom ? 'primary' : 'secondary'}
+              isDisabled={available === 0}
+              onClick={() => setCustom(true)}
+            />
+          </HStack>
+          <SegmentedControl
+            label="對答案方式"
+            value={mode}
+            onChange={(value) => {
+              setMode(value)
+              setTimed(value === 'exam')
+            }}
           >
-            開始練習
-          </Link>
-        )}
-      </section>
-    </div>
+            <SegmentedControlItem value="tutor" label="邊做邊對" />
+            <SegmentedControlItem value="exam" label="做完再對" />
+          </SegmentedControl>
+          <Switch
+            label={timed ? `計時 ${minutes} 分鐘` : '不計時'}
+            description="做完再對預設會計時，大約按 58 題 90 分鐘的比例。"
+            value={timed}
+            onChange={setTimed}
+          />
+          {available === 0 && <Text>這個類別暫時沒有題目。</Text>}
+          {canStart ? (
+            <Button label={`開始練習（${count} 題）`} variant="primary" href={href} />
+          ) : (
+            <Text type="supporting">題庫不足，暫時不能開這一輪。</Text>
+          )}
+        </VStack>
+      </Card>
+      <Banner
+        status="info"
+        title="正確率不是開考成績"
+        description="正式 430 約 58 題、滿分 100、50 分合格。短練習的百分比只代表這一輪。"
+        collapsible={false}
+      />
+    </VStack>
   )
 }

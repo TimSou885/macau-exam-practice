@@ -1,12 +1,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { mockApiPlugin } from './scripts/mock-api-plugin.mjs'
 
 const base = process.env.VITE_BASE_URL || '/'
 
 export default defineConfig({
   plugins: [
     react(),
+    mockApiPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons/*.png', 'og-image.jpg'],

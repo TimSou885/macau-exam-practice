@@ -1,86 +1,97 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { useLocation } from 'react-router-dom'
+import { AlertDialog } from '@astryxdesign/core/AlertDialog'
+import { Badge } from '@astryxdesign/core/Badge'
+import { Banner } from '@astryxdesign/core/Banner'
+import { Button } from '@astryxdesign/core/Button'
+import { Card } from '@astryxdesign/core/Card'
+import { Heading } from '@astryxdesign/core/Heading'
+import { Text } from '@astryxdesign/core/Text'
+import { VStack } from '@astryxdesign/core/VStack'
+import { categoryName } from '../data'
 import { useReviewSchedule } from '../hooks/useStorage'
-import { REVIEW_INTERVAL_DAYS } from '../data'
+import { formatMacau } from '../utils/formatWhen'
 
 export default function SpacedReview() {
+  const location = useLocation()
   const { dueIds, schedule, clearReview } = useReviewSchedule()
+  const [confirmClear, setConfirmClear] = useState(false)
   const totalScheduled = Object.keys(schedule).length
   const dueCount = dueIds.length
+  const upcoming = Object.entries(schedule)
+    .map(([id, entry]) => ({ id, ...entry }))
+    .filter((entry) => entry.nextReviewAt)
+    .sort((a, b) => a.nextReviewAt - b.nextReviewAt)
+    .slice(0, 8)
+  const nextFuture = upcoming.find((entry) => !dueIds.includes(entry.id))
+  const flash = location.state?.reviewed
+    ? `剛完成 ${location.state.reviewed} 題，答對 ${location.state.correct} 題。答對的間隔已往後排。`
+    : null
 
   return (
-    <div className="space-y-8">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100 sm:text-3xl">
-          遺忘曲線複習
-        </h1>
-        <p className="mt-2 text-stone-600 dark:text-stone-400">
-          依艾賓浩斯遺忘曲線安排複習：答錯的題目會在 1、3、7、15、30 天後再次出現，鞏固記憶。
-        </p>
-      </div>
-
-      <section className="rounded-xl border border-stone-200 bg-white p-6 dark:border-stone-700 dark:bg-stone-800/50">
-        <h2 className="text-sm font-semibold text-stone-700 dark:text-stone-300 mb-3">
-          今日待複習
-        </h2>
-        <p className="text-stone-600 dark:text-stone-400">
-          {totalScheduled === 0 ? (
-            <>尚無排程。答錯的題目會自動加入複習排程，請先到練習或挑戰模式作答。</>
-          ) : dueCount === 0 ? (
-            <>目前沒有到期題目，共 {totalScheduled} 題在排程中。明天再來看看吧。</>
-          ) : (
-            <>
-              共 <strong className="text-stone-900 dark:text-stone-100">{dueCount}</strong> 題待複習
-              {totalScheduled > dueCount && (
-                <span className="text-stone-500 dark:text-stone-400">
-                  （排程中共 {totalScheduled} 題）
-                </span>
-              )}
-            </>
+    <VStack gap={6}>
+      <VStack gap={2}>
+        <Heading level={1}>遺忘曲線複習</Heading>
+        <Text>答錯的題目會在 1、3、7、15、30 天後再出現。複習再答錯，就從 1 天後重來。</Text>
+      </VStack>
+      {flash && <Banner status="success" title="複習完成" description={flash} collapsible={false} />}
+      <Card padding={4}>
+        <VStack gap={3}>
+          <Heading level={2}>今日待複習</Heading>
+          {totalScheduled === 0 && <Text>尚無排程。答錯的題目會自動排進來。</Text>}
+          {totalScheduled > 0 && dueCount === 0 && (
+            <Text>
+              目前沒有到期題目，共 {totalScheduled} 題在排程中。
+              {nextFuture ? `下一題在 ${formatMacau(nextFuture.nextReviewAt)}。` : ''}
+            </Text>
           )}
-        </p>
-        {dueCount > 0 && (
-          <Link
-            to="/review/session"
-            className="mt-6 inline-flex items-center justify-center rounded-xl bg-primary-600 px-6 py-3.5 sm:py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[48px] sm:min-h-[44px]"
-          >
-            開始複習（{dueCount} 題）
-          </Link>
-        )}
-      </section>
-
-      <section className="rounded-xl border border-stone-200 bg-stone-50/50 p-4 dark:border-stone-700 dark:bg-stone-800/30">
-        <h2 className="text-sm font-semibold text-stone-700 dark:text-stone-300 mb-2">
-          複習間隔說明
-        </h2>
-        <p className="text-sm text-stone-600 dark:text-stone-400">
-          第一次答錯：1 天後複習 → 答對則延長為 3 天 → 7 天 → 15 天 → 30 天。
-          複習時再答錯則重新從 1 天後開始。間隔為：第 {REVIEW_INTERVAL_DAYS.join('、')} 天。
-        </p>
-      </section>
-
-      {totalScheduled > 0 && (
-        <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={() => {
-              if (window.confirm('確定要清空所有複習排程嗎？錯題本不會受影響。')) clearReview()
-            }}
-            className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-stone-600 dark:text-stone-400 dark:hover:bg-stone-700"
-          >
-            清空複習排程
-          </button>
-        </div>
+          {dueCount > 0 && (
+            <Text>
+              共 {dueCount} 題待複習
+              {totalScheduled > dueCount ? `（排程中共 ${totalScheduled} 題）` : ''}
+            </Text>
+          )}
+          {dueCount > 0 && (
+            <Button label={`開始複習（${dueCount} 題）`} variant="primary" href="/review/session" />
+          )}
+        </VStack>
+      </Card>
+      {upcoming.length > 0 && (
+        <VStack gap={2}>
+          <Heading level={2}>最近的排程</Heading>
+          {upcoming.map((entry) => (
+            <Card key={entry.id} padding={3}>
+              <VStack gap={1}>
+                <Text>
+                  {categoryName(entry.category)} · 第 {(entry.stage ?? 0) + 1} 階段
+                </Text>
+                <Badge
+                  variant={dueIds.includes(entry.id) ? 'warning' : 'neutral'}
+                  label={dueIds.includes(entry.id) ? '今天可以複習' : formatMacau(entry.nextReviewAt)}
+                />
+              </VStack>
+            </Card>
+          ))}
+        </VStack>
       )}
-
-      <p className="text-center text-sm text-stone-500 dark:text-stone-400">
-        <Link to="/wrong" className="text-primary-600 dark:text-primary-400 hover:underline">
-          前往錯題本
-        </Link>
-        {' · '}
-        <Link to="/exam" className="text-primary-600 dark:text-primary-400 hover:underline">
-          選擇考試練習
-        </Link>
-      </p>
-    </div>
+      {totalScheduled > 0 && (
+        <Button label="清空複習排程" variant="secondary" onClick={() => setConfirmClear(true)} />
+      )}
+      <AlertDialog
+        isOpen={confirmClear}
+        onOpenChange={setConfirmClear}
+        title="清空所有複習排程？"
+        description="錯題本不會受影響。已安排的複習日期會消失，不能復原。"
+        cancelLabel="保留排程"
+        actionLabel="清空排程"
+        onAction={() => {
+          clearReview()
+          setConfirmClear(false)
+        }}
+      />
+      <Text type="supporting">
+        <Button label="前往錯題本" href="/wrong" variant="ghost" />
+      </Text>
+    </VStack>
   )
 }

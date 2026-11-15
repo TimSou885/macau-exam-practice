@@ -1,71 +1,78 @@
-import { useLocation, Link } from 'react-router-dom'
-import { EXAM_TYPES } from '../data'
+import { useLocation } from 'react-router-dom'
+import { Button } from '@astryxdesign/core/Button'
+import { Card } from '@astryxdesign/core/Card'
+import { Heading } from '@astryxdesign/core/Heading'
+import { HStack } from '@astryxdesign/core/HStack'
+import { Text } from '@astryxdesign/core/Text'
+import { VStack } from '@astryxdesign/core/VStack'
+import QuestionView from '../components/QuestionView'
+import { EXAM_TYPES, categoryName } from '../data'
+import { loadLastResult } from '../utils/sessionStore'
+import { practiceScoreSummary } from '../utils/scoreCopy'
 
 export default function Result() {
   const location = useLocation()
-  const state = location.state || {}
-  const { total = 0, correct = 0, examType, category } = state
-
-  const score = total > 0 ? Math.round((correct / total) * 100) : 0
+  const state = location.state?.total ? location.state : loadLastResult()
+  const { total = 0, correct = 0, examType, category, mode, misses = [] } = state || {}
+  const summary = practiceScoreSummary({ correct, total })
   const meta = examType ? EXAM_TYPES[examType] : null
-  const pass = score >= 50
+  const again = examType
+    ? `/quiz/${examType}?category=${category || 'all'}&count=${state?.count || 20}&mode=${mode || 'tutor'}&timed=0`
+    : '/exam'
 
   return (
-    <div className="space-y-8">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100 sm:text-3xl">
-          練習結果
-        </h1>
-        {total === 0 && (
-          <p className="mt-4 text-stone-600 dark:text-stone-400">
-            尚無作答紀錄，請先完成一輪練習。
-          </p>
-        )}
-      </div>
-
-      {total > 0 && (
-        <div className="mx-auto max-w-sm rounded-2xl border-2 border-stone-200 bg-white p-8 text-center dark:border-stone-700 dark:bg-stone-800/50">
-          <p className="text-5xl font-bold text-stone-900 dark:text-stone-100">
-            {score}
-            <span className="text-2xl text-stone-500">分</span>
-          </p>
-          <p className="mt-2 text-stone-600 dark:text-stone-400">
-            答對 {correct} / {total} 題
-          </p>
-          <p className={`mt-2 font-medium ${pass ? 'text-primary-600 dark:text-primary-400' : 'text-amber-800 dark:text-amber-400'}`}>
-            {pass ? '達到合格標準（50 分）' : '未達 50 分，請多練習'}
-          </p>
-          {meta && (
-            <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">
-              {meta.name}
-              {category && category !== 'all' ? ` · ${category}` : ''}
-            </p>
-          )}
-        </div>
+    <VStack gap={6}>
+      <Heading level={1}>練習結果</Heading>
+      {total === 0 ? (
+        <Text>尚無作答紀錄。完成一輪練習後，這一頁會留下正確率和錯題。</Text>
+      ) : (
+        <Card padding={5}>
+          <VStack gap={2} align="center">
+            <Heading level={2} type="display-2">
+              {summary.score} 分
+            </Heading>
+            <Text>答對 {correct} / {total} 題</Text>
+            <Text weight="semibold">{summary.headline}</Text>
+            <Text type="supporting">{summary.detail}</Text>
+            {meta && (
+              <Text type="supporting">
+                {meta.name} · {categoryName(category)}
+                {mode === 'exam' ? ' · 做完再對' : ' · 邊做邊對'}
+              </Text>
+            )}
+          </VStack>
+        </Card>
       )}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-        {examType && (
-          <Link
-            to={`/practice/${examType}${category && category !== 'all' ? `?category=${category}` : ''}`}
-            className="inline-flex justify-center rounded-xl bg-primary-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[44px]"
-          >
-            再練一輪
-          </Link>
-        )}
-        <Link
-          to="/exam"
-          className="inline-flex justify-center rounded-xl border-2 border-stone-300 bg-white px-6 py-3 text-base font-medium text-stone-700 hover:bg-stone-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700 min-h-[44px]"
-        >
-          選擇其他考試
-        </Link>
-        <Link
-          to="/wrong"
-          className="inline-flex justify-center rounded-xl border-2 border-stone-300 bg-white px-6 py-3 text-base font-medium text-stone-700 hover:bg-stone-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700 min-h-[44px]"
-        >
-          錯題本
-        </Link>
-      </div>
-    </div>
+      {misses.length > 0 && (
+        <VStack gap={4}>
+          <Heading level={2}>這一輪答錯的題</Heading>
+          {misses.map((miss) => (
+            <Card key={miss.questionId} padding={4}>
+              <QuestionView
+                question={{
+                  id: miss.questionId,
+                  category: miss.category,
+                  question: miss.question,
+                  options: miss.options,
+                  correctKey: miss.correctKey,
+                  explanation: miss.explanation,
+                }}
+                selectedKey={miss.selectedKey}
+                showResult
+                disabled
+                onSelect={() => {}}
+              />
+            </Card>
+          ))}
+        </VStack>
+      )}
+
+      <HStack gap={2} wrap="wrap">
+        {examType && <Button label="再練一輪" variant="primary" href={again} />}
+        <Button label="選擇其他考試" variant="secondary" href="/exam" />
+        <Button label="錯題本" variant="secondary" href="/wrong" />
+      </HStack>
+    </VStack>
   )
 }

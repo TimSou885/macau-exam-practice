@@ -32,6 +32,15 @@ export const EXAM_TYPES = {
   },
 }
 
+export function categoryName(id) {
+  if (!id || id === 'all') return '全部'
+  for (const exam of Object.values(EXAM_TYPES)) {
+    const found = exam.categories.find((cat) => cat.id === id)
+    if (found) return found.name
+  }
+  return id
+}
+
 export const STORAGE_KEYS = {
   wrongAnswers: 'macau-exam-wrong',
   stats: 'macau-exam-stats',

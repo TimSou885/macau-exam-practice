@@ -1,153 +1,81 @@
-import { useState, useMemo, useEffect } from 'react'
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
+import { useMemo } from 'react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Heading } from '@astryxdesign/core/Heading'
+import { VStack } from '@astryxdesign/core/VStack'
+import { Button } from '@astryxdesign/core/Button'
+import LoadingBlock, { LoadError } from '../components/LoadingBlock'
+import QuizRunner from '../components/QuizRunner'
 import { useQuestionsList } from '../hooks/useQuestions'
-import { useWrongAnswers, useStats, useReviewSchedule } from '../hooks/useStorage'
-import { verifyAnswer } from '../api/questions'
-import { shuffle } from '../utils/shuffle'
-import QuestionCard from '../components/QuestionCard'
-import LoadingBlock from '../components/LoadingBlock'
-import LoadError from '../components/LoadError'
+import { useReviewSchedule, useStats, useWrongAnswers } from '../hooks/useStorage'
+import { clampSessionLimit } from '../utils/questionLimit'
+import { loadSession, saveLastResult } from '../utils/sessionStore'
 
 export default function Quiz() {
   const { examType } = useParams()
   const [searchParams] = useSearchParams()
-  const category = searchParams.get('category') || 'all'
   const navigate = useNavigate()
-
+  const category = searchParams.get('category') || 'all'
+  const count = clampSessionLimit(searchParams.get('count')) ?? 20
+  const mode = searchParams.get('mode') === 'exam' ? 'exam' : 'tutor'
+  const timed = searchParams.get('timed') === '1'
+  const sessionKey = `quiz:${examType}:${category}:${count}:${mode}:${timed ? '1' : '0'}`
+  const href = `/quiz/${examType}?${searchParams.toString()}`
+  const saved = useMemo(() => loadSession(sessionKey), [sessionKey])
+  const { questions: loaded, loading, error, reload } = useQuestionsList(examType, category, {
+    limit: count,
+    enabled: !saved,
+  })
   const { addWrong } = useWrongAnswers()
-  const { recordAnswer } = useStats()
   const { addToReview } = useReviewSchedule()
+  const { recordAnswer } = useStats()
+  const questions = saved?.questions ?? loaded
+  const minutes = Math.max(5, Math.round((questions.length || count) * 90 / 58))
 
-  const { questions: loaded, loading, error } = useQuestionsList(examType, category)
-  const [sessionQuestions, setSessionQuestions] = useState([])
-  const [revealed, setRevealed] = useState({})
-  const [verifyError, setVerifyError] = useState(null)
-  const [submitting, setSubmitting] = useState(false)
-
-  useEffect(() => {
-    if (loaded.length) setSessionQuestions(shuffle(loaded))
-    else setSessionQuestions([])
-  }, [loaded])
-
-  const questions = useMemo(
-    () => sessionQuestions.map((q) => ({ ...q, ...revealed[q.id] })),
-    [sessionQuestions, revealed]
-  )
-
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [selectedKey, setSelectedKey] = useState(null)
-  const [showResult, setShowResult] = useState(false)
-  const [answers, setAnswers] = useState([])
-
-  const current = questions[currentIndex]
-  const isLast = currentIndex === questions.length - 1
-
-  const handleSubmit = async () => {
-    if (selectedKey == null || !current || submitting) return
-    setSubmitting(true)
-    setVerifyError(null)
-    try {
-      const result = await verifyAnswer(current.id, selectedKey)
-      setRevealed((prev) => ({
-        ...prev,
-        [current.id]: {
-          correctKey: result.correctKey,
-          explanation: result.explanation,
-        },
-      }))
-      const correct = result.correct
-      if (!correct) {
-        addWrong(current.id)
-        addToReview(current.id)
-      }
-      recordAnswer(examType, correct)
-      setAnswers((prev) => [...prev, { questionId: current.id, correct, selectedKey }])
-      setShowResult(true)
-    } catch (err) {
-      setVerifyError(err.message)
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const handleNext = () => {
-    if (isLast) {
-      navigate('/result', {
-        state: {
-          total: questions.length,
-          correct: answers.filter((a) => a.correct).length,
-          examType,
-          category,
-        },
-      })
-      return
-    }
-    setCurrentIndex((i) => i + 1)
-    setSelectedKey(null)
-    setShowResult(false)
-  }
-
-  if (loading) return <LoadingBlock />
-  if (error) return <LoadError message={error.message} />
-
+  if (!saved && loading) return <LoadingBlock />
+  if (error) return <LoadError message={error.message} onRetry={reload} />
   if (questions.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-stone-600 dark:text-stone-400">暫無題目。</p>
-        <button
-          type="button"
-          onClick={() => navigate(`/practice/${examType}`)}
-          className="mt-4 text-primary-600 dark:text-primary-400 underline"
-        >
-          返回練習選擇
-        </button>
-      </div>
+      <VStack gap={3}>
+        <Heading level={1}>暫無題目</Heading>
+        <Button label="返回練習選擇" href={`/practice/${examType}`} variant="primary" />
+      </VStack>
     )
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-stone-500 dark:text-stone-400">
-        <span>第 {currentIndex + 1} / {questions.length} 題</span>
-        <button
-          type="button"
-          onClick={() => navigate(`/practice/${examType}?category=${category}`)}
-          className="rounded-lg px-4 py-2.5 min-h-[44px] hover:bg-stone-100 dark:hover:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
-        >
-          結束練習
-        </button>
-      </div>
-
-      {verifyError && (
-        <p className="text-sm text-red-600 dark:text-red-400">{verifyError}</p>
-      )}
-
-      <QuestionCard
-        question={current}
-        selectedKey={selectedKey}
-        onSelect={setSelectedKey}
-        showResult={showResult}
-        disabled={showResult || submitting}
-      />
-
-      {!showResult ? (
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={selectedKey == null || submitting}
-          className="w-full rounded-xl bg-primary-600 py-3.5 sm:py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[48px] sm:min-h-[44px]"
-        >
-          {submitting ? '驗證中…' : '提交答案'}
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={handleNext}
-          className="w-full rounded-xl bg-primary-600 py-3.5 sm:py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:bg-primary-500 dark:hover:bg-primary-600 min-h-[48px] sm:min-h-[44px]"
-        >
-          {isLast ? '查看結果' : '下一題'}
-        </button>
-      )}
-    </div>
+    <QuizRunner
+      sessionKey={sessionKey}
+      href={href}
+      questions={questions}
+      restored={saved}
+      mode={mode}
+      durationSec={timed ? minutes * 60 : 0}
+      onVerified={(question, result) => {
+        recordAnswer(examType, result.correct)
+        if (!result.correct) {
+          addWrong(question.id, { category: question.category, examType })
+          addToReview(question.id, { category: question.category, examType })
+        }
+      }}
+      onFinish={(answers) => {
+        const result = buildResult({ answers, examType, category, mode, count })
+        saveLastResult(result)
+        navigate('/result', { state: result })
+      }}
+      onQuit={() => navigate(`/practice/${examType}?category=${category}`)}
+    />
   )
+}
+
+export function buildResult({ answers, examType, category, mode, count }) {
+  const correct = answers.filter((answer) => answer.correct).length
+  return {
+    total: answers.length,
+    correct,
+    examType,
+    category,
+    mode,
+    count,
+    misses: answers.filter((answer) => !answer.correct),
+  }
 }

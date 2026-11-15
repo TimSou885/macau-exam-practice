@@ -1,1 +1,1 @@
-export { EXAM_TYPES, STORAGE_KEYS, REVIEW_INTERVAL_DAYS } from './examMeta'
+export { EXAM_TYPES, STORAGE_KEYS, REVIEW_INTERVAL_DAYS, categoryName } from './examMeta'

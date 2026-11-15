@@ -1,21 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap');
+@import '@astryxdesign/core/reset.css';
+@import '@astryxdesign/core/astryx.css';
+@import '@astryxdesign/theme-matcha/theme.css';
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Matcha ships a Latin script face for headings. Traditional Chinese needs a CJK family. */
+[data-astryx-theme='matcha'] {
+  --font-family-body: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'DM Sans', system-ui, sans-serif;
+  --font-family-heading: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'DM Sans', system-ui, sans-serif;
+}
 
-@layer base {
-  :root {
-    --bottom-tab-height: 3.5rem;
-  }
-  html {
-    /* 手機安全區域（瀏海／虛擬按鈕） */
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-  }
-  body {
-    @apply bg-stone-50 text-stone-900 antialiased dark:bg-stone-900 dark:text-stone-100;
-    min-height: 100vh;
-    min-height: 100dvh; /* 動態視口高度，手機地址欄縮放時更準 */
-  }
+[data-astryx-theme='matcha'] :is(.astryx-heading, .astryx-text, h1, h2, h3, h4, h5, h6, body) {
+  font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'DM Sans', system-ui, sans-serif;
+}
+
+.app-frame {
+  width: min(100%, 56rem);
+  margin-inline: auto;
 }

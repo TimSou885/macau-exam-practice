@@ -6,6 +6,12 @@ import {
   fetchQuestionsByIdsWithAnswers,
 } from '../api/questions'
 
+function useReload() {
+  const [reloadToken, setReloadToken] = useState(0)
+  const reload = () => setReloadToken((n) => n + 1)
+  return { reloadToken, reload }
+}
+
 export function useExamCounts() {
   const [counts, setCounts] = useState({ '430': null, '260': null })
   const [loading, setLoading] = useState(true)
@@ -36,6 +42,7 @@ export function useQuestionCount(examType, category = 'all') {
   const [count, setCount] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
+  const { reloadToken, reload } = useReload()
 
   useEffect(() => {
     if (!examType) {
@@ -60,21 +67,66 @@ export function useQuestionCount(examType, category = 'all') {
     return () => {
       cancelled = true
     }
-  }, [examType, category])
+  }, [examType, category, reloadToken])
 
-  return { count, loading, error }
+  return { count, loading, error, reload }
 }
 
-export function useQuestionsList(examType, category = 'all') {
-  const [questions, setQuestions] = useState([])
+export function useCategoryCounts(examType, categoryIds) {
+  const key = categoryIds.join(',')
+  const [counts, setCounts] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
+  const { reloadToken, reload } = useReload()
 
   useEffect(() => {
+    if (!examType || categoryIds.length === 0) {
+      setCounts(null)
+      setLoading(false)
+      return undefined
+    }
     let cancelled = false
     setLoading(true)
     setError(null)
-    fetchQuestions(examType, category)
+    Promise.all(categoryIds.map((category) => fetchQuestionCount(examType, category)))
+      .then((values) => {
+        if (cancelled) return
+        const next = {}
+        categoryIds.forEach((category, index) => {
+          next[category] = values[index]
+        })
+        setCounts(next)
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [examType, key, reloadToken])
+
+  return { counts, loading, error, reload }
+}
+
+export function useQuestionsList(examType, category = 'all', { limit, enabled = true } = {}) {
+  const [questions, setQuestions] = useState([])
+  const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(enabled)
+  const { reloadToken, reload } = useReload()
+
+  useEffect(() => {
+    if (!enabled || !examType) {
+      setLoading(false)
+      setError(null)
+      return undefined
+    }
+    let cancelled = false
+    setLoading(true)
+    setError(null)
+    fetchQuestions(examType, category, { limit })
       .then((list) => {
         if (!cancelled) setQuestions(list)
       })
@@ -87,9 +139,9 @@ export function useQuestionsList(examType, category = 'all') {
     return () => {
       cancelled = true
     }
-  }, [examType, category])
+  }, [examType, category, limit, enabled, reloadToken])
 
-  return { questions, loading, error, setQuestions }
+  return { questions, loading, error, setQuestions, reload }
 }
 
 export function useQuestionsByIds(ids, { examType = '430' } = {}) {
@@ -97,6 +149,7 @@ export function useQuestionsByIds(ids, { examType = '430' } = {}) {
   const [questions, setQuestions] = useState([])
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
+  const { reloadToken, reload } = useReload()
 
   useEffect(() => {
     let cancelled = false
@@ -115,9 +168,9 @@ export function useQuestionsByIds(ids, { examType = '430' } = {}) {
     return () => {
       cancelled = true
     }
-  }, [idsKey, examType])
+  }, [idsKey, examType, reloadToken])
 
-  return { questions, loading, error, setQuestions }
+  return { questions, loading, error, setQuestions, reload }
 }
 
 export function useQuestionsByIdsWithAnswers(ids, { examType = '430' } = {}) {
@@ -125,6 +178,7 @@ export function useQuestionsByIdsWithAnswers(ids, { examType = '430' } = {}) {
   const [questions, setQuestions] = useState([])
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
+  const { reloadToken, reload } = useReload()
 
   useEffect(() => {
     let cancelled = false
@@ -150,7 +204,7 @@ export function useQuestionsByIdsWithAnswers(ids, { examType = '430' } = {}) {
     return () => {
       cancelled = true
     }
-  }, [idsKey, examType])
+  }, [idsKey, examType, reloadToken])
 
-  return { questions, loading, error, setQuestions }
+  return { questions, loading, error, setQuestions, reload }
 }
