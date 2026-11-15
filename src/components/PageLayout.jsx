@@ -18,7 +18,7 @@ export default function PageLayout({
 }) {
   return (
     <Layout
-      height="fill"
+      height="auto"
       contentWidth={contentWidth}
       header={
         <LayoutHeader hasDivider label={title}>

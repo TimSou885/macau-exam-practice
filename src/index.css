@@ -1,14 +1,15 @@
 @import '@astryxdesign/core/reset.css';
 @import '@astryxdesign/core/astryx.css';
-@import '@astryxdesign/theme-matcha/theme.css';
+@import '@astryxdesign/theme-neutral/fonts.css';
+@import '@astryxdesign/theme-neutral/theme.css';
 
-/* Matcha ships a Latin script face for headings. Traditional Chinese needs a CJK family. */
-[data-astryx-theme='matcha'] {
-  --font-family-body: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'DM Sans', system-ui, sans-serif;
-  --font-family-heading: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'DM Sans', system-ui, sans-serif;
+/* Neutral's Figtree face has no Traditional Chinese glyphs. */
+[data-astryx-theme='neutral'] {
+  --font-family-body: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Figtree', system-ui, sans-serif;
+  --font-family-heading: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Figtree', system-ui, sans-serif;
 }
 
-[data-astryx-theme='matcha'] :is(.astryx-heading, .astryx-text, h1, h2, h3, h4, h5, h6, body) {
-  font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'DM Sans', system-ui, sans-serif;
+[data-astryx-theme='neutral'] :is(.astryx-heading, .astryx-text, h1, h2, h3, h4, h5, h6, body) {
+  font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Figtree', system-ui, sans-serif;
 }
 
